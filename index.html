@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="sidebar.css">
 </head>
 <body>
+<div id="nx-intro" aria-hidden="true"><div class="in-box"><img class="logo in-logo" alt=""><div class="in-name nm">node.x</div><div class="in-bar"><i></i></div></div></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
 	<symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
 	<symbol id="i-games" viewBox="0 0 24 24"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258A4 4 0 0 0 17.32 5z"/></symbol>
@@ -34,14 +35,14 @@
 </header>
 <main>
   <div class="view on" id="v-home">
-   <section class="hero">
-    <p class="kicker"><span class="nm">node.x</span></p>
-    <h1>Play something.</h1>
-    <p class="lead">Hundreds of free games that run right in your browser. No downloads, no sign up.</p>
+   <section class="splash">
+    <img class="logo hero-logo" alt="">
+    <h1 class="hero-name nm">node.x</h1>
+    <p class="sub">Hundreds of free games that run right in your browser. No downloads, no sign up.</p>
     <div class="acts"><a class="btn primary" href="#games">Browse games</a><button class="btn" id="hrnd"><svg class="i"><use href="#i-shuffle"/></svg>Surprise me</button></div>
    </section>
    <section class="shelf">
-    <div class="shelf-h"><h3 id="hrt">Popular</h3><a class="link" href="#games">See all</a></div>
+    <div class="shelf-h"><h3 id="hrt">Featured</h3><a class="link" href="#games">See all</a></div>
     <div class="lgrid row" id="hr"></div>
    </section>
   </div>
@@ -224,7 +225,7 @@ $("#gback").onclick=closeGame;
 // game library (zones.json from your assets repo, html from your html repo)
 const CDN={cover:"https://cdn.jsdelivr.net/gh/duncan132/assets@main",html:"https://cdn.jsdelivr.net/gh/duncan132/html@main"};
 const RAW={cover:"https://raw.githubusercontent.com/duncan132/assets/main",html:"https://raw.githubusercontent.com/duncan132/html/main"};
-let Z=[],fl=[],shown=0,tag="all",loaded=false,tok=0,curHtml="",curG=null;
+let Z=[],fl=[],shown=0,tag="all",loaded=false,tok=0,curHtml="",curUrl="",curG=null;
 const getJ=k=>{try{return JSON.parse(localStorage.getItem(k)||"[]")}catch(e){return[]}},setJ=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let favs=getJ("nx_fav"),rec=getJ("nx_recent");
 const COVERS=["https://cdn.jsdelivr.net/gh/gn-math/covers@main","https://raw.githubusercontent.com/gn-math/covers/main","https://cdn.jsdelivr.net/gh/duncan132/covers@main","https://raw.githubusercontent.com/duncan132/covers/main",CDN.cover,RAW.cover];
@@ -233,11 +234,13 @@ function cf(i){const n=+i.dataset.n+1;if(n<COVERS.length){i.dataset.n=n;i.src=co
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fill=(u,b)=>u.split("{COVER_URL}").join(b.cover).split("{HTML_URL}").join(b.html);
 async function getList(){for(const u of [CDN.cover+"/zones.json",RAW.cover+"/zones.json"]){try{const r=await fetch(u);if(r.ok)return await r.json()}catch(e){}}throw new Error("x")}
+// games that live in this repo. cover and url are files next to index.html
+const LOCAL=[{id:900001,name:"Flux Client",author:"",cover:"flux.jpg",url:"fluxclient.html",local:true}];
 async function loadLib(){loaded=true;
- try{Z=(await getList()).filter(g=>g.id>=0&&g.url&&g.cover);filt();homeRow()}
- catch(e){loaded=false;$("#gcount").innerHTML='<span class="err">Couldn\'t load the game list. Check your connection, then open Games again.</span>'}}
+ try{Z=[...LOCAL,...(await getList()).filter(g=>g.id>=0&&g.url&&g.cover)];filt();homeRow()}
+ catch(e){loaded=false;Z=[...LOCAL];filt();homeRow();$("#gcount").innerHTML='<span class="err">Couldn\'t load the game list. Check your connection, then open Games again.</span>'}}
 function filt(){const q=$("#gq").value.trim().toLowerCase();
- let base=Z;if(tag==="fav")base=Z.filter(g=>favs.includes(g.id));else if(tag==="recent")base=rec.map(id=>Z.find(g=>g.id===id)).filter(Boolean);else if(tag!=="all")base=Z.filter(g=>(g.special||[]).includes(tag));
+ let base=Z;if(tag==="fav")base=Z.filter(g=>favs.includes(g.id));else if(tag==="recent")base=rec.map(id=>Z.find(g=>g.id===id)).filter(Boolean);else if(tag!=="all")base=Z.filter(g=>(g.special||[]).some(x=>String(x).toLowerCase().indexOf(tag)===0));
  fl=base.filter(g=>!q||g.name.toLowerCase().includes(q));
  shown=0;$("#lg").innerHTML="";$("#gcount").textContent=fl.length+" games";more()}
 function more(){const f=fl.slice(shown,shown+60);shown+=f.length;
@@ -246,7 +249,7 @@ function more(){const f=fl.slice(shown,shown+60);shown+=f.length;
 const card=(g,i)=>`<div class="lw" style="animation-delay:${i<30?i*20:0}ms"><button class="lc" data-id="${g.id}"><img loading="lazy" alt="" data-c="${esc(g.cover)}" data-n="0" src="${esc(coverUrl(g.cover,0))}" onerror="cf(this)"><span>${esc(g.name)}</span></button><button class="hrt ${favs.includes(g.id)?"on":""}" data-h="${g.id}" aria-label="Favorite"><svg class="i"><use href="#i-star"/></svg></button></div>`;
 // home shelf: recently played if there is any, otherwise the top of the list
 function homeRow(){const r=rec.map(id=>Z.find(g=>g.id===id)).filter(Boolean),list=(r.length?r:Z).slice(0,12);
- $("#hrt").textContent=r.length?"Jump back in":"Popular";$("#hr").innerHTML=list.map(card).join("")}
+ $("#hrt").textContent=r.length?"Jump back in":"Featured";$("#hr").innerHTML=list.map(card).join("")}
 $("#more").onclick=more;$("#gq").oninput=filt;
 function toggleFav(id){id=+id;favs=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id];setJ("nx_fav",favs);
  $$('[data-h="'+id+'"]').forEach(h=>h.classList.toggle("on",favs.includes(id)));pfavUp();if(tag==="fav"&&$("#player").hidden)filt()}
@@ -257,11 +260,14 @@ $("#lg").onclick=$("#hr").onclick=e=>{const h=e.target.closest(".hrt");if(h){e.s
 $$(".tg").forEach(b=>b.onclick=()=>{tag=b.dataset.tg;$$(".tg").forEach(x=>x.classList.toggle("on",x===b));filt()});
 $$(".tab").forEach(b=>b.onclick=()=>{$$(".tab").forEach(x=>x.classList.toggle("on",x===b));$("#lib").hidden=b.dataset.tab!=="lib";$("#mini").hidden=b.dataset.tab!=="mini"});
 async function play(g){
- if(g.url.indexOf("{HTML_URL}")<0){open(g.url,"_blank");return}
+ if(!g.local&&g.url.indexOf("{HTML_URL}")<0){open(g.url,"_blank");return}
  closeGame();const my=++tok;curG=g;rec=[g.id,...rec.filter(x=>x!==g.id)].slice(0,24);setJ("nx_recent",rec);pfavUp();$("#gwrap").hidden=true;$("#player").hidden=false;
  $("#pt").textContent=g.name;$("#pa").textContent=g.author?"by "+g.author:"";
  const box=$("#pf");box.innerHTML='<p class="gm">Loading '+esc(g.name)+'...</p>';scrollTo(0,0);
- let h="";
+ let h="";curUrl="";
+ if(g.local){curHtml="";curUrl=g.url;const f=document.createElement("iframe");f.allow="fullscreen; autoplay; gamepad; clipboard-write; pointer-lock";f.setAttribute("allowfullscreen","");
+  f.setAttribute("sandbox","allow-scripts allow-same-origin allow-pointer-lock allow-popups allow-forms allow-modals allow-downloads");
+  f.src=g.url;box.innerHTML="";box.appendChild(f);return}
  for(const b of [CDN,RAW]){try{const r=await fetch(fill(g.url,b));if(r.ok){h=await r.text();break}}catch(e){}}
  if(my!==tok)return;
  if(!h){box.innerHTML='<p class="gm">Could not load this game. Try again in a moment.</p>';return}
@@ -271,7 +277,7 @@ async function play(g){
  f.srcdoc=curHtml;box.innerHTML="";box.appendChild(f)}
 $("#pback").onclick=closeGame;
 $("#pfs").onclick=()=>{const f=$("#pf iframe");if(f&&f.requestFullscreen)f.requestFullscreen()};
-$("#pnew").onclick=()=>{if(curHtml)open(URL.createObjectURL(new Blob([curHtml],{type:"text/html"})),"_blank")};
+$("#pnew").onclick=()=>{if(curUrl)open(curUrl,"_blank");else if(curHtml)open(URL.createObjectURL(new Blob([curHtml],{type:"text/html"})),"_blank")};
 
 // save data backup
 $("#exp").onclick=()=>{const o={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);o[k]=localStorage.getItem(k)}}catch(e){}

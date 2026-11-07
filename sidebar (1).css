@@ -1,0 +1,95 @@
+/* node.x sidebar layer: built on your current style.css variables, so all 3 themes still work.
+   Loads AFTER style.css. Delete this file + the 2 tags to undo. */
+:root{--sw:232px;--base:0s}
+html:not(.intro-done){--base:1.5s}
+@keyframes sb-in{from{opacity:0;transform:translate3d(-12px,0,0)}}
+@keyframes nl-in{from{opacity:0;transform:translate3d(-6px,0,0)}}
+
+/* ---------- background image (behind everything, UI becomes see-through) ---------- */
+#nx-bg{position:fixed;inset:0;z-index:-1;background:#000;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .6s var(--ease),visibility 0s .6s}
+#nx-bg.on{opacity:1;visibility:visible;transition-delay:0s}
+#nx-bg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#nx-bg::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,var(--nx-dim,.35))}
+html.has-bg body{background:transparent}
+html.has-bg{
+ --surface:color-mix(in srgb,var(--bg2) 55%,transparent);
+ --surface-2:color-mix(in srgb,color-mix(in srgb,var(--bg2),var(--fg) 6%) 68%,transparent);
+}
+
+/* ---------- sidebar (desktop). Phones keep your top bar. ---------- */
+.nx-ic{margin-right:0}
+@media (max-width:899px){.nx-ic{display:none}}
+@media (min-width:900px){
+ .top{position:fixed;inset:0 auto 0 0;width:var(--sw);height:auto;flex-direction:column;align-items:stretch;gap:20px;padding:20px 14px;border-bottom:0;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 62%,transparent);backdrop-filter:blur(12px);animation:sb-in .5s var(--ease) var(--base) both}
+ .brand{padding:0 8px}
+ #nav{flex:1;margin:0;padding:0;flex-direction:column;gap:2px;border:0;border-radius:0;background:none}
+ #pill{left:0;right:auto;top:0;bottom:auto;width:100%;border-radius:var(--r-sm);transition:transform .4s var(--ease),height .3s var(--ease)}
+ .nl{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-sm);animation:nl-in .45s var(--ease) calc(var(--base) + .05s) both}
+ .nl:nth-child(2){animation-delay:calc(var(--base) + .1s)}.nl:nth-child(3){animation-delay:calc(var(--base) + .15s)}.nl:nth-child(4){animation-delay:calc(var(--base) + .2s)}
+ .nl[data-v=settings]{margin-top:auto}
+ main{margin:0 0 0 var(--sw);max-width:none;padding:32px clamp(20px,4vw,56px) 64px}
+ .view{max-width:1200px}
+}
+
+/* ---------- setup menu + background picker ---------- */
+#nx-setup{width:min(460px,calc(100% - 32px))}
+.nx-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.nx-th{aspect-ratio:4/3;padding:0;overflow:hidden;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--field);transition:border-color var(--t),transform .3s var(--ease)}
+.nx-th img{display:block;width:100%;height:100%;object-fit:cover}
+.nx-th:hover{border-color:var(--border-2);transform:translate3d(0,-2px,0)}
+.nx-th[aria-pressed="true"]{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.nx-acts{display:flex;gap:8px}
+.nx-acts .btn{flex:1}
+#nx-setup .srow{padding:14px 0 0;border:0}
+
+/* ---------- sliders + scrollbars (no browser defaults) ---------- */
+input[type=range]{-webkit-appearance:none;appearance:none;width:180px;height:4px;border-radius:999px;background:var(--surface-3);outline:0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;border:0;background:var(--fg);transition:transform .2s var(--ease)}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;border:0;background:var(--fg)}
+@supports selector(::-webkit-scrollbar){
+ ::-webkit-scrollbar{width:10px;height:10px}
+ ::-webkit-scrollbar-track{background:transparent}
+ ::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--fg) 16%,transparent);border:3px solid transparent;background-clip:padding-box;border-radius:999px}
+ ::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--fg) 32%,transparent);background-clip:padding-box}
+}
+@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--fg) 22%,transparent) transparent}}
+
+/* ---------- load-in intro (pure CSS, so it can never get stuck) ---------- */
+@keyframes in-out{from{clip-path:circle(150% at 50% 50%)}to{clip-path:circle(0% at 50% 50%);visibility:hidden}}
+@keyframes in-logo{from{opacity:0;transform:scale(.4) rotate(-14deg)}}
+@keyframes in-name{from{opacity:0;letter-spacing:.4em;transform:translate3d(0,12px,0)}}
+@keyframes in-bar{from{transform:scaleX(0)}}
+@keyframes rise{from{opacity:0;transform:translate3d(0,24px,0)}}
+@keyframes name-in{from{opacity:0;filter:blur(14px);letter-spacing:.14em;transform:translate3d(0,20px,0) scale(.97)}}
+@keyframes shimmer{to{background-position:-250% 0}}
+@keyframes drift{to{transform:translate3d(60px,40px,0) scale(1.15)}}
+@keyframes bob{50%{transform:translate3d(0,-8px,0)}}
+#nx-intro{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:var(--bg);animation:in-out .6s cubic-bezier(.7,0,.3,1) 1.5s both}
+#nx-intro .in-box{display:flex;flex-direction:column;align-items:center}
+#nx-intro .in-logo{width:92px;height:92px;border-radius:24px;animation:in-logo .9s var(--ease) both}
+#nx-intro .in-name{margin-top:20px;font-size:38px;font-weight:700;letter-spacing:-.03em;animation:in-name .8s var(--ease) .25s both}
+#nx-intro .in-bar{width:150px;height:3px;margin-top:26px;border-radius:99px;overflow:hidden;background:var(--surface-3);animation:fade .4s ease .3s both}
+#nx-intro .in-bar i{display:block;height:100%;background:var(--fg);transform-origin:left;animation:in-bar 1.2s var(--ease) .3s both}
+body.perf #nx-intro{display:none}
+@media (prefers-reduced-motion:reduce){#nx-intro{display:none}}
+
+/* ---------- home: big animated site name ---------- */
+.splash{position:relative;isolation:isolate;overflow:clip;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(36px,10vh,110px) 0 56px}
+.splash::before,.splash::after{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:min(460px,70vw);aspect-ratio:1;border-radius:50%;pointer-events:none;background:radial-gradient(circle,color-mix(in srgb,var(--fg) 16%,transparent),transparent 68%)}
+.splash::before{translate:-90% -60%;animation:drift 16s ease-in-out infinite alternate}
+.splash::after{translate:-10% -50%;animation:drift 21s ease-in-out -7s infinite alternate-reverse}
+.splash>*{animation:rise .8s var(--ease) calc(var(--base) + var(--d,0s)) both}
+.hero-logo{--d:0s;width:84px;height:84px;border-radius:22px;box-shadow:0 24px 60px -24px rgba(0,0,0,.8)}
+.hero-name{--d:.1s;display:block;width:fit-content;max-width:100%;margin:22px auto 0;padding-bottom:.06em;font-size:clamp(56px,12vw,140px);line-height:1.05;letter-spacing:-.05em;
+ background:linear-gradient(100deg,var(--fg) 0%,var(--fg-m) 30%,var(--fg) 50%,var(--fg-m) 70%,var(--fg) 100%) 0 0/250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+ animation:name-in 1s var(--ease) calc(var(--base) + .1s) both,shimmer 8s linear infinite}
+.splash .sub{--d:.3s;margin:18px 0 30px;max-width:46ch;color:var(--fg-m);font-size:17px}
+.splash .acts{--d:.42s;justify-content:center}
+.hero-logo{animation:rise .8s var(--ease) var(--base) both,bob 6s ease-in-out 2s infinite}
+.shelf{animation:rise .8s var(--ease) calc(var(--base) + .55s) both}
+.perf .splash::before,.perf .splash::after{display:none}
+@media (min-width:900px) and (max-width:1150px){
+ .lgrid.row{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .lgrid.row .lw:nth-child(n+5){display:none}
+}

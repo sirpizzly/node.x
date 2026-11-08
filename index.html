@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>node.x</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23000%22/%3E%3Cpolygon%20points%3D%2228%2C74%2028%2C26%2038%2C26%2062%2C58%2062%2C26%2072%2C26%2072%2C74%2062%2C74%2038%2C42%2038%2C74%22%20fill%3D%22%23f5f6f8%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="sidebar.css">
 <style>#pf{position:relative}#pf iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}</style>
@@ -75,10 +76,18 @@
   <div class="view" id="v-settings">
    <h2>Settings</h2>
    <div class="sets">
-    <section><h3>Theme</h3>
+    <section><h3>Performance</h3>
      <div class="s-panel">
-      <div class="srow col"><div><small>Colors and logo for the whole site.</small></div><div class="themes" id="themes"></div></div>
       <label class="srow"><div><b>Performance mode</b><small>Turns off animation. Try it if the site feels slow.</small></div><input type="checkbox" role="switch" id="perf"></label>
+     </div>
+    </section>
+    <section><h3>Look</h3>
+     <div class="s-panel">
+      <div class="srow col"><div><b>Accent color</b><small>Buttons, the sidebar highlight and switches.</small></div><div class="acts" id="lkAcc"></div></div>
+      <div class="srow col"><div><b>Corners</b><small>How round buttons, cards and panels are.</small></div><div class="acts" id="lkRad"></div></div>
+      <div class="srow col"><div><b>Font</b><small>The typeface used across the site.</small></div><div class="acts" id="lkFont"></div></div>
+      <label class="srow"><div><b>Sidebar opacity</b><small>Lower is more see-through.</small></div><input type="range" id="lkSb" min="0" max="100" step="1"></label>
+      <label class="srow"><div><b>Sidebar blur</b><small>How much the sidebar blurs what is behind it.</small></div><input type="range" id="lkBlur" min="0" max="30" step="1"></label>
      </div>
     </section>
     <section><h3>Name and logo</h3>
@@ -110,16 +119,12 @@
 
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const DEF="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#000"/><g stroke="#f5f6f8" stroke-width="3"><path d="M50 18 80 35 80 65 50 82 20 65 20 35Z" fill="none"/><path d="M50 18V50M20 35 50 50 80 35M50 50V82"/></g><circle cx="50" cy="50" r="8" fill="#9a9aa2"/></svg>');
-// Each theme's colors live in style.css under html[data-theme]; bg/fg here only paint the preview tiles.
-const THEMES={
- node:{label:"Default",bg:"#0e0e10",fg:"#ededef",logo:DEF,name:"node.x"},
- mei:{label:"Mei Mei",bg:"#000",fg:"#fff",logo:"https://tr.rbxcdn.com/180DAY-a175ab77fef306e1a567da03872fd10f/420/420/BackAccessory/Webp/noFilter",name:"node.x"},
- david:{label:"David Douglas",bg:"#8f0f1e",fg:"#fff",logo:"https://cache.bsnsports.com/comp/sls/get/43/15387?f=jpg&sid=15387&ts=1749478020",name:"node.x"}
-};
-const D={theme:"node",perf:false,name:"node.x",logo:""};
-let S={...D};
+const DEF="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#000"/><polygon points="28,74 28,26 38,26 62,58 62,26 72,26 72,74 62,74 38,42 38,74" fill="#f5f6f8"/></svg>');
+const THEMES={node:{logo:DEF,name:"node.x"}};
+const D={theme:"node",perf:false,name:"node.x",logo:"",look:{acc:"white",rad:"m",font:"geist",sb:28,blur:12}};
+let S={...D,look:{...D.look}};
 try{Object.assign(S,JSON.parse(localStorage.getItem("nodex")||"{}"))}catch(e){}
+S.theme="node";S.look=Object.assign({},D.look,S.look);
 const save=()=>{try{localStorage.setItem("nodex",JSON.stringify(S))}catch(e){}};
 const C={a:"",b:""}; // snake colors, read from the theme in apply()
 
@@ -129,23 +134,42 @@ function apply(){
  $$(".nm").forEach(n=>n.textContent=S.name);
  $$("h1.title").forEach(h=>h.textContent=S.name);
  document.title=S.name;
- document.documentElement.dataset.theme=THEMES[S.theme]?S.theme:"node";
+ document.documentElement.dataset.theme="node";look();
  const cs=getComputedStyle(document.documentElement);C.a=cs.getPropertyValue("--fg").trim();C.b=cs.getPropertyValue("--fg-m").trim();
  document.body.classList.toggle("perf",S.perf);
- $$(".tb").forEach(x=>x.setAttribute("aria-pressed",x.dataset.t===S.theme));
  $("#perf").checked=S.perf;
  $("#name").value=S.name;
  save();
 }
-$("#themes").innerHTML=Object.entries(THEMES).map(([k,t])=>`<button class="tb" data-t="${k}" style="background:${t.bg};color:${t.fg}"><img alt="" src="${t.logo}" onerror="this.src=DEF"><span>${t.label}</span></button>`).join("");
-$$(".tb").forEach(b=>b.onclick=()=>{S.theme=b.dataset.t;S.logo="";S.name=THEMES[S.theme].name;apply()});
+// Look: every default reproduces the original design, so nothing changes until you pick something.
+const ACC={white:["#ededef","#0e0e10"],red:["#f87171","#1a0505"],orange:["#fb923c","#1c0d02"],yellow:["#fbbf24","#1c1402"],green:["#4ade80","#04170a"],blue:["#60a5fa","#04101f"],purple:["#a78bfa","#0d0820"],pink:["#f472b6","#1f0614"]};
+const RAD={sharp:["Sharp",3,5],m:["Default",8,12],round:["Round",14,20]};
+const FONTS={geist:["Geist",""],manrope:["Manrope",'"Manrope",ui-sans-serif,system-ui,sans-serif'],system:["System",'ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif']};
+function look(){
+ const L=S.look,st=document.documentElement.style,a=ACC[L.acc],r=RAD[L.rad],f=FONTS[L.font];
+ if(!a||L.acc==="white"){st.removeProperty("--accent");st.removeProperty("--on-accent")}else{st.setProperty("--accent",a[0]);st.setProperty("--on-accent",a[1])}
+ if(!r||L.rad==="m"){st.removeProperty("--r-sm");st.removeProperty("--r")}else{st.setProperty("--r-sm",r[1]+"px");st.setProperty("--r",r[2]+"px")}
+ st.fontFamily=f?f[1]:"";
+ st.setProperty("--nx-sbp",L.sb+"%");st.setProperty("--nx-blur",L.blur+"px");
+ $$("#lkAcc .sw").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===L.acc));
+ $$("#lkRad .chip").forEach(b=>b.classList.toggle("on",b.dataset.v===L.rad));
+ $$("#lkFont .chip").forEach(b=>b.classList.toggle("on",b.dataset.v===L.font));
+ $("#lkSb").value=L.sb;$("#lkBlur").value=L.blur;
+}
+$("#lkAcc").innerHTML=Object.keys(ACC).map(k=>`<button class="sw" type="button" data-v="${k}" aria-label="${k}" style="--c:${ACC[k][0]}"></button>`).join("");
+$("#lkRad").innerHTML=Object.entries(RAD).map(([k,v])=>`<button class="chip" type="button" data-v="${k}">${v[0]}</button>`).join("");
+$("#lkFont").innerHTML=Object.entries(FONTS).map(([k,v])=>`<button class="chip" type="button" data-v="${k}">${v[0]}</button>`).join("");
+const pickLook=(sel,key)=>$$(sel).forEach(b=>b.onclick=()=>{S.look[key]=b.dataset.v;apply()});
+pickLook("#lkAcc .sw","acc");pickLook("#lkRad .chip","rad");pickLook("#lkFont .chip","font");
+$("#lkSb").oninput=e=>{S.look.sb=+e.target.value;apply()};
+$("#lkBlur").oninput=e=>{S.look.blur=+e.target.value;apply()};
 $("#perf").onchange=e=>{S.perf=e.target.checked;apply()};
 $("#name").oninput=e=>{S.name=e.target.value||"node.x";apply()};
 $("#logoApply").onclick=()=>{const v=$("#logoUrl").value.trim();if(v){S.logo=v;apply();toast("Logo updated")}};
 $("#logoReset").onclick=()=>{S.logo="";apply()};
 $("#logoFile").onclick=()=>$("#file").click();
 $("#file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{S.logo=r.result;apply();toast("Logo updated")};r.readAsDataURL(f)};
-$("#reset").onclick=()=>ask("Reset settings?","Every setting goes back to the default.","Reset").then(ok=>{if(ok){S={...D};apply();toast("Settings reset")}});
+$("#reset").onclick=()=>ask("Reset settings?","Every setting goes back to the default.","Reset").then(ok=>{if(ok){S={...D,look:{...D.look}};apply();toast("Settings reset")}});
 
 // popup that closes with the reverse of its opening animation
 const dlg=$("#ask");
@@ -242,9 +266,9 @@ const BASES=[
 // that serves the right Content-Type. Swap MIRROR for your own relay later if you want.
 // sw.js (next to this file) relays the blocked gn-math jsDelivr URLs through GitHub. Without it we fall back to rewriting URLs.
 const ASSET_J={cover:"https://cdn.jsdelivr.net/gh/gn-math/assets@main",html:"https://cdn.jsdelivr.net/gh/gn-math/html@main"};
-let swErr="";
+let swErr="",swReg=null;
 if("serviceWorker" in navigator){
- navigator.serviceWorker.register("sw.js").catch(e=>{swErr=String(e&&e.message||e)});
+ navigator.serviceWorker.register("sw.js").then(r=>{swReg=r}).catch(e=>{swErr=String(e&&e.message||e)});
  // a hard refresh (Ctrl+Shift+R) loads the page without the worker; one normal reload hands control to it
  navigator.serviceWorker.ready.then(()=>setTimeout(()=>{try{if(navigator.serviceWorker.controller)sessionStorage.removeItem("nx_swr");else if(!sessionStorage.getItem("nx_swr")){sessionStorage.setItem("nx_swr","1");location.reload()}}catch(e){}},600)).catch(()=>{});
 }
@@ -297,11 +321,13 @@ $$(".tg").forEach(b=>b.onclick=()=>{tag=b.dataset.tg;$$(".tg").forEach(x=>x.clas
 $$(".tab").forEach(b=>b.onclick=()=>{$$(".tab").forEach(x=>x.classList.toggle("on",x===b));$("#lib").hidden=b.dataset.tab!=="lib";$("#mini").hidden=b.dataset.tab!=="mini"});
 let GJ=null;
 const getGJ=async()=>{if(GJ)return GJ;try{const r=await fetch("games.json");GJ=r.ok?await r.json():[]}catch(e){GJ=[]}return GJ};
-const REP='<script>(function(){function r(m){try{parent.postMessage({nxerr:m},"*")}catch(e){}}addEventListener("error",function(e){var t=e.target;if(t&&t!==window&&(t.src||t.href))r("could not load "+(t.src||t.href));else r((e.message||"script error")+(e.filename?" ("+e.filename.split("/").pop()+":"+e.lineno+")":""))},true);addEventListener("unhandledrejection",function(e){r("promise: "+(e.reason&&(e.reason.message||e.reason)))});var of=window.fetch;if(of)window.fetch=function(a){var u=typeof a==="string"?a:(a&&a.url);return of.apply(this,arguments).then(function(x){if(!x.ok)r("HTTP "+x.status+"  "+u);return x},function(er){r("request failed  "+u);throw er})};var oo=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){var q=this;this.addEventListener("loadend",function(){if(q.status===0||q.status>=400)r((q.status||"failed")+"  "+u)});return oo.apply(this,arguments)};try{var io=indexedDB.open;indexedDB.open=function(){var q=io.apply(this,arguments);try{q.addEventListener("error",function(){r("IndexedDB error: "+(q.error&&(q.error.name+" - "+q.error.message)))});q.addEventListener("blocked",function(){r("IndexedDB blocked by another open connection")})}catch(e){}return q}}catch(e){r("IndexedDB unavailable: "+(e&&e.message||e))}})()<\/script>';
+const REP='<script>(function(){function r(m){try{parent.postMessage({nxerr:m},"*")}catch(e){}}addEventListener("error",function(e){var t=e.target;if(t&&t!==window&&(t.src||t.href))r("could not load "+(t.src||t.href));else r((e.message||"script error")+(e.filename?" ("+e.filename.split("/").pop()+":"+e.lineno+")":""))},true);addEventListener("unhandledrejection",function(e){r("promise: "+(e.reason&&(e.reason.message||e.reason)))});var of=window.fetch;if(of)window.fetch=function(a){var u=typeof a==="string"?a:(a&&a.url);return of.apply(this,arguments).then(function(x){if(!x.ok)r("HTTP "+x.status+"  "+u);return x},function(er){r("request failed  "+u);throw er})};var oo=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){var q=this;this.addEventListener("loadend",function(){if(q.status===0||q.status>=400)r((q.status||"failed")+"  "+u)});return oo.apply(this,arguments)};addEventListener("error",function(e){if(/unreachable|RuntimeError|abort|memory/i.test(e.message||"")){var gl=0;try{gl=!!document.createElement("canvas").getContext("webgl2")}catch(x){}r("environment: SharedArrayBuffer "+(typeof SharedArrayBuffer!=="undefined")+", crossOriginIsolated "+self.crossOriginIsolated+", WebGL2 "+gl+", cores "+navigator.hardwareConcurrency+", memory(GB) "+navigator.deviceMemory)}},true);try{var io=indexedDB.open;indexedDB.open=function(){var q=io.apply(this,arguments);try{q.addEventListener("error",function(){r("IndexedDB error: "+(q.error&&(q.error.name+" - "+q.error.message)))});q.addEventListener("blocked",function(){r("IndexedDB blocked by another open connection")})}catch(e){}return q}}catch(e){r("IndexedDB unavailable: "+(e&&e.message||e))}})()<\/script>';
 // A game inside srcdoc has no real address (about:srcdoc), so loaders that do new URL("Build/x.data") or
 // new URL(path, location.href) throw "Invalid URL". This makes URL fall back to the game's base instead.
-const REP2='<script>(function(){var U=window.URL,FB="__FB__",ID="__ID__";function ok(b){return b&&/^https?:/i.test(String(b))}function nb(){var d=document.baseURI;return ok(d)?d:FB}function N(u,b){try{return new U(u,b)}catch(e){if(!ok(b)){try{return new U(u,nb())}catch(e2){}}throw e}}N.prototype=U.prototype;N.createObjectURL=U.createObjectURL.bind(U);N.revokeObjectURL=U.revokeObjectURL.bind(U);if(U.canParse)N.canParse=function(u,b){try{N(u,b);return true}catch(e){return false}};try{window.URL=N}catch(e){}try{var P="nx"+ID+"_",F=window.IDBFactory&&IDBFactory.prototype;if(F){var o=F.open,d=F.deleteDatabase,l=F.databases;F.open=function(n){var a=[].slice.call(arguments);a[0]=P+n;return o.apply(this,a)};F.deleteDatabase=function(n){return d.call(this,P+n)};if(l)F.databases=function(){return l.call(this).then(function(x){return x.filter(function(e){return e.name.indexOf(P)===0}).map(function(e){return{name:e.name.slice(P.length),version:e.version}})})}}}catch(e){}})()<\/script>';
-const inject=(t,fb,id)=>{const R=REP2.split("__FB__").join(fb||"").split("__ID__").join(id==null?"":id)+REP;return /<head(?:\s[^>]*)?>/i.test(t)?t.replace(/<head(?:\s[^>]*)?>/i,m=>m+R):R+t};
+const REP2='<script>(function(){var U=window.URL,FB="__FB__",ID="__ID__";function ok(b){return b&&/^https?:/i.test(String(b))}function nb(){var d=document.baseURI;return ok(d)?d:FB}function N(u,b){try{return new U(u,b)}catch(e){if(!ok(b)){try{return new U(u,nb())}catch(e2){}}throw e}}N.prototype=U.prototype;N.createObjectURL=U.createObjectURL.bind(U);N.revokeObjectURL=U.revokeObjectURL.bind(U);if(U.canParse)N.canParse=function(u,b){try{N(u,b);return true}catch(e){return false}};var NF="__NF__",ALL=NF==="all";if(!ALL&&NF.indexOf("url")<0)try{window.URL=N}catch(e){}if(!ALL&&NF.indexOf("idb")<0)try{var P="nx"+ID+"_",F=window.IDBFactory&&IDBFactory.prototype;if(F){var o=F.open,d=F.deleteDatabase,l=F.databases;F.open=function(n){var a=[].slice.call(arguments);a[0]=P+n;return o.apply(this,a)};F.deleteDatabase=function(n){return d.call(this,P+n)};if(l)F.databases=function(){return l.call(this).then(function(x){return x.filter(function(e){return e.name.indexOf(P)===0}).map(function(e){return{name:e.name.slice(P.length),version:e.version}})})}}}catch(e){}})()<\/script>';
+// Debug switch: open the site as /?nofix=all (or url, idb, rep) to turn the injected helpers off and see which one a game dislikes.
+const NF=(new URLSearchParams(location.search).get("nofix")||"").toLowerCase();
+const inject=(t,fb,id)=>{const R=(NF==="all"?"":REP2.split("__FB__").join(fb||"").split("__ID__").join(id==null?"":id).split("__NF__").join(NF))+(NF==="all"||NF==="rep"?"":REP);return /<head(?:\s[^>]*)?>/i.test(t)?t.replace(/<head(?:\s[^>]*)?>/i,m=>m+R):R+t};
 async function play(g){
  if(!g.local&&g.url.indexOf("{HTML_URL}")<0){open(g.url,"_blank");return}
  closeGame();const my=++tok;curG=g;rec=[g.id,...rec.filter(x=>x!==g.id)].slice(0,24);setJ("nx_recent",rec);pfavUp();$("#gwrap").hidden=true;$("#player").hidden=false;
@@ -326,7 +352,7 @@ async function play(g){
  const f=document.createElement("iframe");f.allow="fullscreen; autoplay; gamepad; clipboard-write; pointer-lock";f.setAttribute("allowfullscreen","");
  f.setAttribute("sandbox","allow-scripts allow-same-origin allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-forms allow-modals allow-downloads allow-orientation-lock allow-presentation");
  f.setAttribute("tabindex","0");f.onload=()=>{try{f.focus();f.contentWindow&&f.contentWindow.focus()}catch(e){}};
- f.srcdoc=curHtml;box.innerHTML="";box.appendChild(f);setTimeout(()=>{try{f.focus()}catch(e){}},300);if(!g.local&&!viaSW)note("Relay is not running ("+(swErr||(!window.isSecureContext?"page is not on https":!("serviceWorker" in navigator)?"browser blocks service workers":"not controlling this page, reload once normally"))+"), using a fallback. Add sw.js next to index.html and reload.")}
+ f.srcdoc=curHtml;box.innerHTML="";box.appendChild(f);setTimeout(()=>{try{f.focus()}catch(e){}},300);if(!g.local&&!viaSW)note("Relay off ("+(swErr||(!window.isSecureContext?"page is not on https":!("serviceWorker" in navigator)?"browser blocks service workers":"not controlling this page"))+"; "+(swReg?"scope "+swReg.scope+", worker "+(((swReg.active||swReg.waiting||swReg.installing)||{}).state||"none"):"not registered")+"). Games load straight from the CDN instead.")}
 // problems reported from inside the game show under the player
 const dbg=[];
 function note(m){if(dbg.includes(m))return;dbg.push(m);const d=$("#pdbg");d.hidden=false;d.innerHTML="<b>Problems inside this game:</b><br>"+dbg.map(esc).join("<br>")}

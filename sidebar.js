@@ -15,6 +15,14 @@
     Object.assign({ id: "p2" }, pin("74/38/fd/7438fd83bc70e8e77b9be9fddc20c5ce", "736x", "736x")),
     Object.assign({ id: "p3" }, pin("f5/ff/25/f5ff255ec5ffed5135d997583f19ca5f", "736x", "736x"))
   ];
+  /* Wallpapers shared from kommodo.ai. Those links expire on 8 Dec 2026, so each one first looks for a copy of
+     its own in the wallpapers/ folder (wallpapers/1.jpg ... 8.jpg) and only then uses the kommodo link. */
+  var KP = "https://plain-wnam-prod-public.komododecks.com/202611/08/";
+  ["siscdUR5ei5MdtAdeLap", "I2wxxkWxKEKHTSsALurX", "5M0cTbJWqdephm8LhgjQ", "fNihGSqCDuHroL1IyDh7",
+   "Un4vS4NhbMXxkEDzrcOW", "1GYC8iHH8lNmBuY4mREn", "rZzOLK1GMi33MAjkxLFk", "CUsONYwu5ajgZeqbqNK5"].forEach(function (id, i) {
+    var u = KP + id + "/image.jpg", l = "wallpapers/" + (i + 1) + ".jpg";
+    PRE.push({ id: "k" + (i + 1), lo: u, th: [l, u], c: [l, u] });
+  });
   var st = { bg: "none", dim: 0.35, done: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
@@ -89,7 +97,7 @@
     PRE.forEach(function (p, i) {
       var b = mk("button", "nx-th"), im = new Image();
       b.type = "button"; b.dataset.id = p.id; b.setAttribute("aria-label", "Background " + (i + 1));
-      im.src = p.lo; im.alt = ""; im.referrerPolicy = "no-referrer"; im.loading = "lazy";
+      im.alt = ""; im.referrerPolicy = "no-referrer"; im.loading = "lazy"; var tl = p.th || [p.lo], ti = 0; im.onerror = function () { if (++ti < tl.length) im.src = tl[ti]; }; im.src = tl[0];
       b.appendChild(im); b.onclick = function () { setBg(p.id); }; grid.appendChild(b);
     });
     var up = mk("button", "btn nx-up", "Upload your own"), no = mk("button", "btn nx-none", "None");

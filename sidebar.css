@@ -25,7 +25,7 @@ html.has-bg{
  #nav{flex:1;margin:0;padding:0;flex-direction:column;gap:2px;border:0;border-radius:0;background:none}
  #pill{left:0;right:auto;top:0;bottom:auto;width:100%;border-radius:var(--r-sm);transition:transform .4s var(--ease),height .3s var(--ease)}
  .nl{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-sm);animation:nl-in .45s var(--ease) calc(var(--base) + .05s) both}
- .nl:nth-child(2){animation-delay:calc(var(--base) + .1s)}.nl:nth-child(3){animation-delay:calc(var(--base) + .15s)}.nl:nth-child(4){animation-delay:calc(var(--base) + .2s)}
+ .nl:nth-child(2){animation-delay:calc(var(--base) + .1s)}.nl:nth-child(3){animation-delay:calc(var(--base) + .15s)}.nl:nth-child(4){animation-delay:calc(var(--base) + .2s)}.nl:nth-child(5){animation-delay:calc(var(--base) + .25s)}
  .nl[data-v=settings]{margin-top:auto}
  main{margin:0 0 0 var(--sw);max-width:none;padding:32px clamp(20px,4vw,56px) 64px}
  .view{max-width:1200px}
@@ -100,3 +100,11 @@ body.perf #nx-intro{display:none}
 .sw:hover{transform:scale(1.12)}
 .sw[aria-pressed="true"]{border-color:var(--bg2);box-shadow:0 0 0 2px var(--fg)}
 #nx-setup .nx-pick{max-height:236px;overflow-y:auto;padding-right:2px}
+
+/* ---------- Credits page ---------- */
+.cred{display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(16px,6vh,56px) 0 32px;animation:rise .7s var(--ease) both}
+.cred-pic{display:block;width:min(280px,62vw);aspect-ratio:1;object-fit:cover;border-radius:50%;background:var(--bg2);outline:1px solid var(--border-2);outline-offset:4px;box-shadow:0 30px 80px -30px rgba(0,0,0,.8);transition:transform .35s var(--ease)}
+.cred a:hover .cred-pic{transform:scale(1.03)}
+.cred-name{margin-top:28px;font-size:clamp(34px,6vw,56px);letter-spacing:-.04em}
+.cred-quote{max-width:36ch;margin-top:22px;color:var(--fg-m);font-size:clamp(17px,2.4vw,22px);line-height:1.5}
+.cred-quote footer{margin-top:12px;color:var(--fg);font-size:15px;font-weight:600}

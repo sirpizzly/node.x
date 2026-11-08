@@ -1,14 +1,22 @@
 // Cloudflare Worker: keeps your API key private and forwards screenshots to DeepSeek (deepseek-flash).
 // Secrets/vars: DEEPSEEK_API_KEY (secret), ALLOWED_ORIGIN (e.g. https://yoursite.com)
 const SYSTEM = `You are a tutor looking at a screenshot of a web page.
-Find every question or problem visible. For each one, give the answer first, then a short explanation.
-Number them in the order they appear. If no question is visible, say what you see and ask what to help with.`;
+Find every question or problem visible and reply in this exact format, in the order they appear:
+Q1: <the question, copied briefly>
+A1: <the answer>
+Why: <one short sentence of explanation>
+Then Q2/A2/Why, and so on. If no question is visible, say what you see and ask what to help with.`;
 
 export default {
   async fetch(req, env) {
-    const allowed = env.ALLOWED_ORIGIN || "*";
+    // ALLOWED_ORIGIN can be a comma-separated list, e.g. https://yoursite.com,chrome-extension://YOUR_ID
+    const list = (env.ALLOWED_ORIGIN || "*").split(",").map((x) => x.trim()).filter(Boolean);
+    const anyOrigin = list.includes("*");
+    const origin = req.headers.get("Origin") || "";
+    const originOk = anyOrigin || list.includes(origin);
     const cors = {
-      "Access-Control-Allow-Origin": allowed,
+      "Access-Control-Allow-Origin": anyOrigin ? "*" : originOk ? origin : list[0],
+      "Vary": "Origin",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
     };
@@ -17,7 +25,7 @@ export default {
 
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     if (req.method !== "POST") return json({ error: "POST only" }, 405);
-    if (allowed !== "*" && req.headers.get("Origin") !== allowed) return json({ error: "Origin not allowed" }, 403);
+    if (!originOk) return json({ error: "Origin not allowed" }, 403);
 
     let body;
     try { body = await req.json(); } catch { return json({ error: "Bad JSON" }, 400); }

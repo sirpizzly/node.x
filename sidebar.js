@@ -27,7 +27,11 @@
   var VID = [
     { id: "v1", u: "https://www.image2url.com/r2/default/videos/1794165774935-5083d5e6-4e6f-43fe-923d-a3ef77162782.mp4" },
     { id: "v2", u: "https://www.image2url.com/r2/default/videos/1794165612663-bb0f9d7e-3a41-4c7e-810a-79a43b80db28.mp4" },
-    { id: "v3", u: "https://www.image2url.com/r2/default/videos/1794165442322-b83f6ca0-af29-4704-b611-f043d8515007.mp4" }
+    { id: "v3", u: "https://www.image2url.com/r2/default/videos/1794165442322-b83f6ca0-af29-4704-b611-f043d8515007.mp4" },
+    /* videotolink.net share pages. If one will not play, swap in its direct .mp4 link (right-click the video > Copy video address). */
+    { id: "v4", u: "https://videotolink.net/v/wOlbJ84G01" },
+    { id: "v5", u: "https://videotolink.net/v/IGeYo4PRE9" },
+    { id: "v6", u: "https://videotolink.net/v/dgrXxMk3NC" }
   ];
   function vidOf(id) { return VID.filter(function (x) { return x.id === id; })[0]; }
   var RM = "(prefers-reduced-motion: reduce)";

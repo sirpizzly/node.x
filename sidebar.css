@@ -8,13 +8,16 @@ html:not(.intro-done){--base:1.5s}
 /* ---------- background image (behind everything, UI becomes see-through) ---------- */
 #nx-bg{position:fixed;inset:0;z-index:-1;background:#000;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .6s var(--ease),visibility 0s .6s}
 #nx-bg.on{opacity:1;visibility:visible;transition-delay:0s}
-#nx-bg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #nx-bg::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,var(--nx-dim,.35))}
 html.has-bg body{background:transparent}
 html.has-bg{
- --surface:color-mix(in srgb,var(--bg2) 55%,transparent);
- --surface-2:color-mix(in srgb,color-mix(in srgb,var(--bg2),var(--fg) 6%) 68%,transparent);
+ --surface:color-mix(in srgb,var(--bg2) var(--nx-pa,72%),transparent);
+ --surface-2:color-mix(in srgb,color-mix(in srgb,var(--bg2),var(--fg) 8%) var(--nx-pa2,80%),transparent);
 }
+#nx-bg img,#nx-bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#nx-bg video{display:none}
+#nx-bg.is-vid video{display:block}
+#nx-bg.is-vid img{display:none}
 
 /* ---------- sidebar (desktop). Phones keep your top bar. ---------- */
 .nx-ic{margin-right:0}
@@ -32,15 +35,13 @@ html.has-bg{
 }
 
 /* ---------- setup menu + background picker ---------- */
-#nx-setup{width:min(460px,calc(100% - 32px))}
 .nx-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
-.nx-th{aspect-ratio:4/3;padding:0;overflow:hidden;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--field);transition:border-color var(--t),transform .3s var(--ease)}
-.nx-th img{display:block;width:100%;height:100%;object-fit:cover}
+.nx-th{position:relative;aspect-ratio:4/3;padding:0;overflow:hidden;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--field);transition:border-color var(--t),transform .3s var(--ease)}
+.nx-th img,.nx-th video{display:block;width:100%;height:100%;object-fit:cover}
 .nx-th:hover{border-color:var(--border-2);transform:translate3d(0,-2px,0)}
 .nx-th[aria-pressed="true"]{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
 .nx-acts{display:flex;gap:8px}
 .nx-acts .btn{flex:1}
-#nx-setup .srow{padding:14px 0 0;border:0}
 
 /* ---------- sliders + scrollbars (no browser defaults) ---------- */
 input[type=range]{-webkit-appearance:none;appearance:none;width:180px;height:4px;border-radius:999px;background:var(--surface-3);outline:0;cursor:pointer}
@@ -99,7 +100,6 @@ body.perf #nx-intro{display:none}
 .sw{width:28px;height:28px;padding:0;border:2px solid transparent;border-radius:999px;background:var(--c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);transition:transform .15s var(--ease),border-color var(--t)}
 .sw:hover{transform:scale(1.12)}
 .sw[aria-pressed="true"]{border-color:var(--bg2);box-shadow:0 0 0 2px var(--fg)}
-#nx-setup .nx-pick{max-height:236px;overflow-y:auto;padding-right:2px}
 
 /* ---------- Credits page ---------- */
 .cred{display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(16px,6vh,56px) 0 32px;animation:rise .7s var(--ease) both}
@@ -108,3 +108,70 @@ body.perf #nx-intro{display:none}
 .cred-name{margin-top:28px;font-size:clamp(34px,6vw,56px);letter-spacing:-.04em}
 .cred-quote{max-width:36ch;margin-top:22px;color:var(--fg-m);font-size:clamp(17px,2.4vw,22px);line-height:1.5}
 .cred-quote footer{margin-top:12px;color:var(--fg);font-size:15px;font-weight:600}
+
+/* ---------- no intro (setting) ---------- */
+html.no-intro #nx-intro{display:none}
+
+/* ---------- animated wallpapers in the picker ---------- */
+.nx-lab{margin:12px 0 8px;color:var(--fg-m);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.nx-lab:first-child{margin-top:0}
+.nx-th.vid::after{content:"LIVE";position:absolute;top:6px;left:6px;padding:1px 7px;border-radius:999px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;text-shadow:none}
+.nx-vnote{display:none;margin:-2px 0 8px;color:var(--fg-m);font-size:13px}
+.perf .nx-vnote{display:block}
+
+/* ---------- first-visit setup: full pages ---------- */
+.nx-page{position:fixed;inset:0;z-index:150;display:grid;place-items:center;padding:20px;overflow:auto;background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);animation:fade .35s ease both}
+.nx-page.peek{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+.nx-pg{display:flex;flex-direction:column;gap:22px;width:min(720px,100%);padding:clamp(20px,4vw,40px);border:1px solid var(--border-2);border-radius:var(--r);background:var(--bg2);box-shadow:0 30px 80px -20px rgba(0,0,0,.7);text-shadow:none}
+.nx-dots{display:flex;gap:6px}
+.nx-dots i{flex:1;height:4px;border-radius:99px;background:var(--surface-3);transition:background-color var(--t)}
+.nx-dots i.on{background:var(--fg)}
+.nx-step{animation:up .35s var(--ease) both}
+.nx-step h2{margin-bottom:8px;font-size:clamp(26px,4vw,34px)}
+.nx-sub{margin-bottom:20px;color:var(--fg-m);font-size:15px}
+.nx-opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.nx-opt{position:relative;padding:20px;border:1px solid var(--border-2);border-radius:var(--r);background:var(--surface);color:var(--fg);text-align:left;transition:border-color var(--t),background-color var(--t),transform .12s ease}
+.nx-opt:hover{background:var(--surface-2)}
+.nx-opt:active{transform:scale(.98)}
+.nx-opt[aria-pressed="true"]{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.nx-opt b{display:block;font-size:18px}
+.nx-opt span{display:block;margin-top:8px;color:var(--fg-m);font-size:14px;line-height:1.45}
+.nx-opt em{display:inline-block;margin-top:12px;padding:2px 10px;border:1px solid var(--border-2);border-radius:999px;font-size:12px;font-style:normal;font-weight:600}
+.nx-scroll{max-height:min(46vh,380px);overflow-y:auto;padding-right:4px}
+.nx-pg .srow{padding:14px 0 0;border:0}
+.nx-grp{margin-top:18px}
+.nx-grp>b{display:block;margin-bottom:10px;font-size:14px}
+.nx-foot{display:flex;align-items:center;gap:10px}
+.nx-foot .sp{flex:1}
+@media (max-width:600px){.nx-opts{grid-template-columns:1fr}.nx-pg{gap:16px}}
+
+/* ---------- readability: easier to see text over wallpapers ---------- */
+html.has-bg body{text-shadow:0 1px 3px rgba(0,0,0,.8),0 0 14px rgba(0,0,0,.4)}
+html.has-bg :is(.btn.primary,.btn[aria-pressed="true"],.chip.on,.nl.act,#toast,.modal,.modal *,.nx-pg,.nx-pg *,input,.input){text-shadow:none}
+.nl{color:var(--fg);opacity:.92}
+.nl:hover,.nl.act{opacity:1}
+html.has-bg .lc span{width:fit-content;max-width:100%;margin-top:8px;padding:5px 9px;border-radius:8px;background:color-mix(in srgb,var(--bg) 78%,transparent);text-shadow:none}
+html.has-bg .lc img{box-shadow:0 8px 22px -10px rgba(0,0,0,.8)}
+html.has-bg .gm,html.has-bg .srow small,html.has-bg .lead,html.has-bg .splash .sub{color:var(--fg)}
+html.has-bg .top{box-shadow:inset -1px 0 0 var(--border-2)}
+@media (max-width:899px){html.has-bg .top{background:color-mix(in srgb,var(--bg) 82%,transparent)}}
+
+/* High contrast text (setting) */
+html.hc{--fg-m:var(--fg);--fg-d:color-mix(in srgb,var(--fg) 82%,transparent);--border:color-mix(in srgb,var(--fg) 30%,transparent);--border-2:color-mix(in srgb,var(--fg) 48%,transparent)}
+html.hc.has-bg body{text-shadow:0 0 2px #000,0 1px 5px #000}
+html.hc .nl,html.hc .btn,html.hc .chip,html.hc .lc span{font-weight:600}
+
+/* Text size (setting) */
+html[data-tz="s"]{--tz:.92}html[data-tz="l"]{--tz:1.15}html[data-tz="xl"]{--tz:1.3}
+html[data-tz] .nl,html[data-tz] .btn,html[data-tz] .chip,html[data-tz] .gm,html[data-tz] .lc span,html[data-tz] .card p,html[data-tz] .modal p,html[data-tz] .nx-sub,html[data-tz] .nx-opt span{font-size:calc(14px*var(--tz))}
+html[data-tz] .srow small{font-size:calc(13px*var(--tz))}
+html[data-tz] .srow b,html[data-tz] .input,html[data-tz] .field input{font-size:calc(15px*var(--tz))}
+html[data-tz] .card b{font-size:calc(16px*var(--tz))}
+html[data-tz] .lead,html[data-tz] .splash .sub{font-size:calc(17px*var(--tz))}
+html[data-tz] .brand{font-size:calc(17px*var(--tz))}
+html[data-tz] .btn{height:auto;min-height:38px;padding-block:7px}
+html[data-tz] .chip{height:auto;min-height:32px;padding-block:5px}
+html[data-tz] .nl{white-space:nowrap}
+
+/* Game card size (setting) */
+@media (min-width:601px){.lgrid:not(.row){grid-template-columns:repeat(auto-fill,minmax(var(--nx-card,150px),1fr))}}

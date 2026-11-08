@@ -7,6 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23000%22/%3E%3Cpolygon%20points%3D%2228%2C74%2028%2C26%2038%2C26%2062%2C58%2062%2C26%2072%2C26%2072%2C74%2062%2C74%2038%2C42%2038%2C74%22%20fill%3D%22%23f5f6f8%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="sidebar.css">
+<script>try{var _s=JSON.parse(localStorage.getItem("nodex")||"{}");if(_s.look&&_s.look.intro===false)document.documentElement.classList.add("no-intro","intro-done")}catch(e){}</script>
 <style>#pf{position:relative}#pf iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}</style>
 </head>
 <body>
@@ -93,11 +94,21 @@
     </section>
     <section><h3>Look</h3>
      <div class="s-panel">
-      <div class="srow col"><div><b>Accent color</b><small>Buttons, the sidebar highlight and switches.</small></div><div class="acts" id="lkAcc"></div></div>
+      <div class="srow col"><div><b>Font</b><small>The typeface used across the site. A font downloads the first time you pick it.</small></div><div class="acts" id="lkFont"></div></div>
+      <div class="srow col"><div><b>Text size</b><small>Make text and buttons bigger or smaller.</small></div><div class="acts" id="lkTxt"></div></div>
+      <label class="srow"><div><b>High contrast text</b><small>Brighter text with a dark outline, easier to read over wallpapers.</small></div><input type="checkbox" role="switch" id="lkHc"></label>
       <div class="srow col"><div><b>Corners</b><small>How round buttons, cards and panels are.</small></div><div class="acts" id="lkRad"></div></div>
-      <div class="srow col"><div><b>Font</b><small>The typeface used across the site.</small></div><div class="acts" id="lkFont"></div></div>
-      <label class="srow"><div><b>Sidebar opacity</b><small>Lower is more see-through.</small></div><input type="range" id="lkSb" min="0" max="100" step="1"></label>
+      <label class="srow"><div><b>Sidebar opacity</b><small>Higher makes the sidebar more solid and its text easier to read.</small></div><input type="range" id="lkSb" min="0" max="100" step="1"></label>
       <label class="srow"><div><b>Sidebar blur</b><small>How much the sidebar blurs what is behind it.</small></div><input type="range" id="lkBlur" min="0" max="30" step="1"></label>
+      <label class="srow"><div><b>Panel opacity</b><small>How solid cards, buttons and settings panels are over a wallpaper.</small></div><input type="range" id="lkPa" min="30" max="100" step="1"></label>
+      <label class="srow"><div><b>Game card size</b><small>How big the game covers are on the Games page.</small></div><input type="range" id="lkCard" min="110" max="240" step="5"></label>
+     </div>
+    </section>
+    <section><h3>General</h3>
+     <div class="s-panel">
+      <div class="srow col"><div><b>Start page</b><small>Which page opens when you visit node.x.</small></div><div class="acts" id="lkStart"></div></div>
+      <label class="srow"><div><b>Intro animation</b><small>The logo animation when the site loads. Takes effect next time you open it.</small></div><input type="checkbox" role="switch" id="lkIntro"></label>
+      <label class="srow"><div><b>Warn before leaving a game</b><small>Asks first if you close or refresh the tab while a game is open, so you do not lose progress.</small></div><input type="checkbox" role="switch" id="lkWarn"></label>
      </div>
     </section>
     <section><h3>Name and logo</h3>
@@ -131,10 +142,11 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const DEF="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#000"/><polygon points="28,74 28,26 38,26 62,58 62,26 72,26 72,74 62,74 38,42 38,74" fill="#f5f6f8"/></svg>');
 const THEMES={node:{logo:DEF,name:"node.x"}};
-const D={theme:"node",perf:false,name:"node.x",logo:"",look:{acc:"white",rad:"m",font:"geist",sb:28,blur:12}};
+const D={v:2,theme:"node",perf:false,name:"node.x",logo:"",look:{rad:"m",font:"geist",txt:"m",hc:false,sb:55,blur:12,pa:72,card:150,start:"home",intro:true,warn:false}};
 let S={...D,look:{...D.look}};
 try{Object.assign(S,JSON.parse(localStorage.getItem("nodex")||"{}"))}catch(e){}
-S.theme="node";S.look=Object.assign({},D.look,S.look);
+S.theme="node";S.look=Object.assign({},D.look,S.look);delete S.look.acc;
+if((S.v||0)<2){S.look.sb=D.look.sb;S.v=2} // v2: stronger sidebar by default so text is easier to read
 const save=()=>{try{localStorage.setItem("nodex",JSON.stringify(S))}catch(e){}};
 const C={a:"",b:""}; // snake colors, read from the theme in apply()
 
@@ -151,28 +163,56 @@ function apply(){
  $("#name").value=S.name;
  save();
 }
-// Look: every default reproduces the original design, so nothing changes until you pick something.
-const ACC={white:["#ededef","#0e0e10"],red:["#f87171","#1a0505"],orange:["#fb923c","#1c0d02"],yellow:["#fbbf24","#1c1402"],green:["#4ade80","#04170a"],blue:["#60a5fa","#04101f"],purple:["#a78bfa","#0d0820"],pink:["#f472b6","#1f0614"]};
+// Look: fonts, text size, contrast and layout. (The accent color setting was removed; old saved values are ignored.)
 const RAD={sharp:["Sharp",3,5],m:["Default",8,12],round:["Round",14,20]};
-const FONTS={geist:["Geist",""],manrope:["Manrope",'"Manrope",ui-sans-serif,system-ui,sans-serif'],system:["System",'ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif']};
+const SANS=',ui-sans-serif,system-ui,sans-serif';
+const FONTS={
+ geist:["Geist",""],
+ manrope:["Manrope",'"Manrope"'+SANS],
+ system:["System",'ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif'],
+ inter:["Inter",'"Inter"'+SANS,"Inter:wght@300..800"],
+ poppins:["Poppins",'"Poppins"'+SANS,"Poppins:wght@400;500;600;700"],
+ outfit:["Outfit",'"Outfit"'+SANS,"Outfit:wght@300..800"],
+ dmsans:["DM Sans",'"DM Sans"'+SANS,"DM+Sans:wght@400;500;600;700"],
+ space:["Space Grotesk",'"Space Grotesk"'+SANS,"Space+Grotesk:wght@300..700"],
+ lexend:["Lexend",'"Lexend"'+SANS,"Lexend:wght@300..700"],
+ nunito:["Nunito",'"Nunito"'+SANS,"Nunito:wght@300..800"],
+ sora:["Sora",'"Sora"'+SANS,"Sora:wght@300..700"],
+ fredoka:["Fredoka",'"Fredoka"'+SANS,"Fredoka:wght@400..700"],
+ atkinson:["Atkinson (easy to read)",'"Atkinson Hyperlegible"'+SANS,"Atkinson+Hyperlegible:wght@400;700"],
+ playfair:["Playfair (serif)",'"Playfair Display",Georgia,serif',"Playfair+Display:wght@400..800"],
+ serif:["Classic serif",'Georgia,"Times New Roman",serif'],
+ jetbrains:["JetBrains Mono",'"JetBrains Mono",ui-monospace,Consolas,monospace',"JetBrains+Mono:wght@400..700"],
+ mono:["System mono",'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace']
+};
+const TXT={s:"Small",m:"Default",l:"Large",xl:"Extra large"};
+const START={home:"Home",games:"Games"};
+// Google fonts download only when picked (or when saved as your font), so the site stays fast
+const loadedF={};
+function loadFont(g){if(!g||loadedF[g])return;loadedF[g]=1;const l=document.createElement("link");l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family="+g+"&display=swap";document.head.appendChild(l)}
 function look(){
- const L=S.look,st=document.documentElement.style,a=ACC[L.acc],r=RAD[L.rad],f=FONTS[L.font];
- if(!a||L.acc==="white"){st.removeProperty("--accent");st.removeProperty("--on-accent")}else{st.setProperty("--accent",a[0]);st.setProperty("--on-accent",a[1])}
+ const L=S.look,h=document.documentElement,st=h.style,r=RAD[L.rad],f=FONTS[L.font];
+ st.removeProperty("--accent");st.removeProperty("--on-accent");
  if(!r||L.rad==="m"){st.removeProperty("--r-sm");st.removeProperty("--r")}else{st.setProperty("--r-sm",r[1]+"px");st.setProperty("--r",r[2]+"px")}
- st.fontFamily=f?f[1]:"";
+ st.fontFamily=f?f[1]:"";if(f&&f[2])loadFont(f[2]);
  st.setProperty("--nx-sbp",L.sb+"%");st.setProperty("--nx-blur",L.blur+"px");
- $$("#lkAcc .sw").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===L.acc));
- $$("#lkRad .chip").forEach(b=>b.classList.toggle("on",b.dataset.v===L.rad));
- $$("#lkFont .chip").forEach(b=>b.classList.toggle("on",b.dataset.v===L.font));
- $("#lkSb").value=L.sb;$("#lkBlur").value=L.blur;
+ st.setProperty("--nx-pa",L.pa+"%");st.setProperty("--nx-pa2",Math.min(100,L.pa+8)+"%");st.setProperty("--nx-card",L.card+"px");
+ if(L.txt&&L.txt!=="m")h.dataset.tz=L.txt;else delete h.dataset.tz;
+ h.classList.toggle("hc",!!L.hc);
+ const on=(sel,v)=>$$(sel).forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+ on("#lkRad .chip",L.rad);on("#lkFont .chip",L.font);on("#lkTxt .chip",L.txt);on("#lkStart .chip",L.start);
+ $("#lkSb").value=L.sb;$("#lkBlur").value=L.blur;$("#lkPa").value=L.pa;$("#lkCard").value=L.card;
+ $("#lkHc").checked=!!L.hc;$("#lkIntro").checked=L.intro!==false;$("#lkWarn").checked=!!L.warn;
 }
-$("#lkAcc").innerHTML=Object.keys(ACC).map(k=>`<button class="sw" type="button" data-v="${k}" aria-label="${k}" style="--c:${ACC[k][0]}"></button>`).join("");
-$("#lkRad").innerHTML=Object.entries(RAD).map(([k,v])=>`<button class="chip" type="button" data-v="${k}">${v[0]}</button>`).join("");
-$("#lkFont").innerHTML=Object.entries(FONTS).map(([k,v])=>`<button class="chip" type="button" data-v="${k}">${v[0]}</button>`).join("");
+const chips=(id,o)=>$(id).innerHTML=Object.entries(o).map(([k,v])=>`<button class="chip" type="button" data-v="${k}">${Array.isArray(v)?v[0]:v}</button>`).join("");
+chips("#lkRad",RAD);chips("#lkFont",FONTS);chips("#lkTxt",TXT);chips("#lkStart",START);
 const pickLook=(sel,key)=>$$(sel).forEach(b=>b.onclick=()=>{S.look[key]=b.dataset.v;apply()});
-pickLook("#lkAcc .sw","acc");pickLook("#lkRad .chip","rad");pickLook("#lkFont .chip","font");
-$("#lkSb").oninput=e=>{S.look.sb=+e.target.value;apply()};
-$("#lkBlur").oninput=e=>{S.look.blur=+e.target.value;apply()};
+pickLook("#lkRad .chip","rad");pickLook("#lkFont .chip","font");pickLook("#lkTxt .chip","txt");pickLook("#lkStart .chip","start");
+const range=(id,key)=>$(id).oninput=e=>{S.look[key]=+e.target.value;apply()};
+range("#lkSb","sb");range("#lkBlur","blur");range("#lkPa","pa");range("#lkCard","card");
+const flag=(id,key)=>$(id).onchange=e=>{S.look[key]=e.target.checked;apply()};
+flag("#lkHc","hc");flag("#lkIntro","intro");flag("#lkWarn","warn");
+addEventListener("beforeunload",e=>{if(S.look.warn&&!$("#player").hidden){e.preventDefault();e.returnValue=""}});
 $("#perf").onchange=e=>{S.perf=e.target.checked;apply()};
 $("#name").oninput=e=>{S.name=e.target.value||"node.x";apply()};
 $("#logoApply").onclick=()=>{const v=$("#logoUrl").value.trim();if(v){S.logo=v;apply();toast("Logo updated")}};
@@ -393,7 +433,7 @@ $("#clr").onclick=()=>ask("Clear game saves?","Progress saved by games will be d
 
 apply();
 loadLib();
-show(location.hash.slice(1)||"home"); 
+show(location.hash.slice(1)||S.look.start||"home"); 
 	</script>
 <script src="sidebar.js"></script>
 </body>

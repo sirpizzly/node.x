@@ -1,4 +1,4 @@
-/* node.x sidebar layer: nav icons, vertical pill, background picker, first-visit setup menu.
+/* node.x sidebar layer: nav icons, vertical pill, background picker (images + animated), first-visit setup pages.
    Load AFTER your main <script>. Uses your existing S, apply(), toast() and Performance mode. */
 (function () {
   "use strict";
@@ -23,7 +23,15 @@
     var u = KP + id + "/image.jpg", l = "wallpapers/" + (i + 1) + ".jpg";
     PRE.push({ id: "k" + (i + 1), lo: u, th: [l, u], c: [l, u] });
   });
-  var st = { bg: "none", dim: 0.35, done: false };
+  /* Animated wallpapers (muted looping video). They pause in Performance mode and show their first frame. */
+  var VID = [
+    { id: "v1", u: "https://www.image2url.com/r2/default/videos/1794165774935-5083d5e6-4e6f-43fe-923d-a3ef77162782.mp4" },
+    { id: "v2", u: "https://www.image2url.com/r2/default/videos/1794165612663-bb0f9d7e-3a41-4c7e-810a-79a43b80db28.mp4" },
+    { id: "v3", u: "https://www.image2url.com/r2/default/videos/1794165442322-b83f6ca0-af29-4704-b611-f043d8515007.mp4" }
+  ];
+  function vidOf(id) { return VID.filter(function (x) { return x.id === id; })[0]; }
+  function isPerf() { return document.body.classList.contains("perf") || matchMedia("(prefers-reduced-motion: reduce)").matches; }
+  var st = { bg: "none", dim: 0.45, done: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
   function say(m) { if (typeof toast === "function") toast(m); }
@@ -47,14 +55,41 @@
   /* ----- background layer ----- */
   var layer = mk("div"); layer.id = "nx-bg";
   var img = new Image(); img.alt = ""; img.referrerPolicy = "no-referrer"; img.decoding = "async";
-  layer.appendChild(img); document.body.prepend(layer);
+  var vid = document.createElement("video");
+  vid.muted = true; vid.defaultMuted = true; vid.loop = true; vid.playsInline = true; vid.disablePictureInPicture = true;
+  vid.setAttribute("muted", ""); vid.setAttribute("playsinline", ""); vid.setAttribute("aria-hidden", "true"); vid.tabIndex = -1;
+  layer.append(img, vid); document.body.prepend(layer);
   var ci = 0, curId = null;
   function cands(id) {
     if (id === "up") { var u = null; try { u = localStorage.getItem(UP); } catch (e) {} return u ? [u] : []; }
     var p = PRE.filter(function (x) { return x.id === id; })[0]; return p ? p.c : [];
   }
+  function stopVid() {
+    vid.onloadeddata = vid.onerror = null;
+    if (vid.getAttribute("src")) { vid.pause(); vid.removeAttribute("src"); vid.load(); }
+  }
+  function playVid() {
+    if (isPerf()) { vid.pause(); try { vid.currentTime = 0; } catch (e) {} return; }
+    var p = vid.play(); if (p && p.catch) p.catch(function () {});
+  }
   function applyBg() {
     layer.style.setProperty("--nx-dim", st.dim);
+    var v = vidOf(st.bg);
+    if (v) {
+      layer.classList.add("is-vid"); curId = st.bg; img.dataset.s = ""; img.removeAttribute("src");
+      vid.preload = isPerf() ? "metadata" : "auto";
+      if (vid.getAttribute("src") !== v.u) {
+        layer.classList.remove("on");
+        vid.onloadeddata = function () { layer.classList.add("on"); root.classList.add("has-bg"); playVid(); };
+        vid.onerror = function () {
+          if (!vid.getAttribute("src")) return;
+          say("That animated wallpaper could not load."); stopVid(); st.bg = "none"; curId = null; save(); applyBg(); sync();
+        };
+        vid.src = v.u;
+      } else { layer.classList.add("on"); root.classList.add("has-bg"); playVid(); }
+      return;
+    }
+    layer.classList.remove("is-vid"); stopVid();
     var list = cands(st.bg);
     if (!list.length) { curId = null; layer.classList.remove("on"); root.classList.remove("has-bg"); return; }
     if (curId !== st.bg) { curId = st.bg; ci = 0; img.dataset.s = ""; }
@@ -92,17 +127,32 @@
   };
 
   var pickers = [];
+  var io = "IntersectionObserver" in window ? new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) { var t = e.target; if (t.dataset.src) { t.src = t.dataset.src; delete t.dataset.src; } io.unobserve(t); } });
+  }) : null;
   function picker() {
-    var box = mk("div"), grid = mk("div", "nx-pick"), acts = mk("div", "nx-acts");
+    var box = mk("div"), grid = mk("div", "nx-pick"), vgrid = mk("div", "nx-pick"), acts = mk("div", "nx-acts");
     PRE.forEach(function (p, i) {
       var b = mk("button", "nx-th"), im = new Image();
       b.type = "button"; b.dataset.id = p.id; b.setAttribute("aria-label", "Background " + (i + 1));
       im.alt = ""; im.referrerPolicy = "no-referrer"; im.loading = "lazy"; var tl = p.th || [p.lo], ti = 0; im.onerror = function () { if (++ti < tl.length) im.src = tl[ti]; }; im.src = tl[0];
       b.appendChild(im); b.onclick = function () { setBg(p.id); }; grid.appendChild(b);
     });
+    VID.forEach(function (p, i) {
+      var b = mk("button", "nx-th vid"), tv = document.createElement("video");
+      b.type = "button"; b.dataset.id = p.id; b.setAttribute("aria-label", "Animated background " + (i + 1));
+      tv.muted = true; tv.loop = true; tv.playsInline = true; tv.preload = "metadata"; tv.tabIndex = -1; tv.setAttribute("aria-hidden", "true");
+      tv.dataset.src = p.u + "#t=0.1"; if (io) io.observe(tv); else { tv.src = tv.dataset.src; delete tv.dataset.src; }
+      b.appendChild(tv);
+      b.onmouseenter = function () { if (!isPerf()) { var q = tv.play(); if (q && q.catch) q.catch(function () {}); } };
+      b.onmouseleave = function () { tv.pause(); };
+      b.onclick = function () { setBg(p.id); }; vgrid.appendChild(b);
+    });
     var up = mk("button", "btn nx-up", "Upload your own"), no = mk("button", "btn nx-none", "None");
     up.type = no.type = "button"; up.onclick = function () { file.click(); }; no.onclick = function () { setBg("none"); };
-    acts.append(up, no); box.append(grid, acts); pickers.push(box); return box;
+    acts.append(up, no);
+    box.append(mk("div", "nx-lab", "Images"), grid, mk("div", "nx-lab", "Animated"), mk("p", "nx-vnote", "Animated wallpapers are paused in Performance mode (you see the first frame)."), vgrid, acts);
+    pickers.push(box); return box;
   }
   function sync() {
     pickers = pickers.filter(function (p) { return p.isConnected; });
@@ -114,29 +164,77 @@
     document.querySelectorAll("input.nx-dim").forEach(function (i) { i.value = st.dim; });
   }
 
-  /* ----- setup menu (first visit). Performance mode = your existing S.perf ----- */
+  /* ----- first-visit setup: full pages. Page 1 is Performance mode on its own. ----- */
   function setup() {
     if (document.getElementById("nx-setup")) return;
-    var d = mk("dialog", "modal"), b = mk("div", "m-body", "<h2>Welcome to node.x</h2><p>Pick a background and a mode. You can change both later in Settings.</p>");
-    d.id = "nx-setup";
-    var pk = picker(); pk.style.marginTop = "16px";
-    var row = mk("label", "srow", "<div><b>Performance mode</b><small>Turns off animation. Try it if the site feels slow.</small></div>");
-    var sw = mk("input"); sw.type = "checkbox"; sw.setAttribute("role", "switch"); sw.checked = !!S.perf;
-    sw.onchange = function () { S.perf = sw.checked; apply(); };
-    row.appendChild(sw);
-    var acts = mk("div", "acts"), done = mk("button", "btn primary", "Done"); done.type = "button"; acts.appendChild(done);
-    b.append(pk, row, acts); d.appendChild(b); document.body.appendChild(d);
-    function shut() {
-      if (d.classList.contains("closing")) return;
-      var end = function () { d.classList.remove("closing"); d.close(); };
-      d.classList.add("closing");
-      if (getComputedStyle(d).animationName === "none") return end();
-      d.addEventListener("animationend", end, { once: true });
+    var pg = mk("div", "nx-page"), box = mk("div", "nx-pg"), dots = mk("div", "nx-dots"), body = mk("div"), foot = mk("div", "nx-foot");
+    pg.id = "nx-setup"; pg.setAttribute("role", "dialog"); pg.setAttribute("aria-modal", "true"); pg.setAttribute("aria-label", "node.x setup");
+    var back = mk("button", "btn", "Back"), skip = mk("button", "link", "Skip setup"), next = mk("button", "btn primary", "Next");
+    back.type = skip.type = next.type = "button"; skip.style.cssText = "background:none;border:0;cursor:pointer";
+    foot.append(back, mk("span", "sp"), skip, next);
+    box.append(dots, body, foot); pg.appendChild(box);
+    var cur = 0;
+
+    function chipRow(map, key, extra) {
+      var row = mk("div", "acts");
+      Object.keys(map).forEach(function (k) {
+        var v = map[k], b = mk("button", "chip", Array.isArray(v) ? v[0] : v); b.type = "button"; b.dataset.v = k;
+        b.onclick = function () { S.look[key] = k; apply(); paint(); }; row.appendChild(b);
+      });
+      function paint() { row.querySelectorAll(".chip").forEach(function (b) { b.classList.toggle("on", b.dataset.v === S.look[key]); }); }
+      paint(); return row;
     }
-    d.addEventListener("cancel", function (e) { e.preventDefault(); shut(); });
-    d.addEventListener("click", function (e) { if (e.target === d) shut(); });
-    d.addEventListener("close", function () { st.done = true; save(); d.remove(); sync(); });
-    done.onclick = shut; d.showModal(); sync();
+
+    var steps = [
+      function perfPage() {
+        var w = mk("div", "nx-step", "<h2>How should node.x run?</h2><p class=\"nx-sub\">Pick what fits your device. You can change this any time in Settings.</p>");
+        var grid = mk("div", "nx-opts");
+        function opt(t, d, val, tag) {
+          var c = mk("button", "nx-opt", "<b>" + t + "</b><span>" + d + "</span>" + (tag ? "<em>" + tag + "</em>" : ""));
+          c.type = "button"; c.onclick = function () { S.perf = val; apply(); paint(); }; return c;
+        }
+        var full = opt("Full effects", "Smooth animations, blur and animated wallpapers. Best on a normal computer.", false, "");
+        var perf = opt("Performance mode", "Turns off animations, blur and moving wallpapers. Pick this if the site feels slow or your device is old.", true, "Best for slow devices");
+        function paint() { full.setAttribute("aria-pressed", !S.perf); perf.setAttribute("aria-pressed", !!S.perf); }
+        paint(); grid.append(full, perf); w.appendChild(grid); return w;
+      },
+      function bgPage() {
+        var w = mk("div", "nx-step", "<h2>Pick a background</h2><p class=\"nx-sub\">The page behind this one shows your choice. Animated ones move, and pause if you chose Performance mode.</p>");
+        var sc = mk("div", "nx-scroll"); sc.appendChild(picker()); w.appendChild(sc);
+        var r = mk("label", "srow", "<div><b>Dim</b><small>Darken the wallpaper so text is easier to read.</small></div>");
+        var rg = mk("input", "nx-dim"); rg.type = "range"; rg.min = 0; rg.max = 0.8; rg.step = 0.05; rg.value = st.dim;
+        rg.oninput = function () { st.dim = +rg.value; layer.style.setProperty("--nx-dim", st.dim); save(); };
+        r.appendChild(rg); w.appendChild(r); sync(); return w;
+      },
+      function lookPage() {
+        var w = mk("div", "nx-step", "<h2>Make it easy to read</h2><p class=\"nx-sub\">Choose a font and text size. More options are in Settings.</p>");
+        var g1 = mk("div", "nx-grp", "<b>Font</b>"); g1.appendChild(chipRow(FONTS, "font"));
+        var g2 = mk("div", "nx-grp", "<b>Text size</b>"); g2.appendChild(chipRow(TXT, "txt"));
+        var g3 = mk("label", "srow", "<div><b>High contrast text</b><small>Brighter text with a dark outline.</small></div>");
+        var sw = mk("input"); sw.type = "checkbox"; sw.setAttribute("role", "switch"); sw.checked = !!S.look.hc;
+        sw.onchange = function () { S.look.hc = sw.checked; apply(); }; g3.appendChild(sw);
+        w.append(g1, g2, g3); return w;
+      }
+    ];
+
+    function render() {
+      dots.innerHTML = ""; steps.forEach(function (_, i) { dots.appendChild(mk("i", i <= cur ? "on" : "")); });
+      body.innerHTML = ""; body.appendChild(steps[cur]());
+      pg.classList.toggle("peek", cur === 1);
+      back.style.visibility = cur ? "visible" : "hidden";
+      next.textContent = cur === steps.length - 1 ? "Finish" : "Next";
+      var f = body.querySelector("button"); if (f) f.focus({ preventScroll: true });
+    }
+    function shut() {
+      st.done = true; save(); document.body.style.overflow = ""; document.removeEventListener("keydown", key, true);
+      pg.remove(); sync();
+    }
+    function key(e) { if (e.key === "Escape") { e.preventDefault(); shut(); } }
+    back.onclick = function () { if (cur) { cur--; render(); } };
+    next.onclick = function () { if (cur < steps.length - 1) { cur++; render(); } else shut(); };
+    skip.onclick = shut;
+    document.addEventListener("keydown", key, true);
+    document.body.style.overflow = "hidden"; document.body.appendChild(pg); render();
   }
 
   /* ----- Settings: Background section ----- */
@@ -156,13 +254,20 @@
   /* ----- load-in intro: the overlay is in index.html and hides itself with CSS; this just cleans up ----- */
   var intro = document.getElementById("nx-intro");
   function introDone() { root.classList.add("intro-done"); if (intro && intro.parentNode) intro.remove(); }
-  var skip = !intro || document.body.classList.contains("perf") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var skip = !intro || root.classList.contains("no-intro") || document.body.classList.contains("perf") || matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (skip) introDone();
   else {
     setTimeout(function () { if (intro.parentNode) intro.remove(); }, 2200);
     setTimeout(function () { root.classList.add("intro-done"); }, 3400);
     intro.addEventListener("click", introDone);
   }
+
+  /* when Performance mode flips, pause or resume the animated wallpaper */
+  if (typeof window.apply === "function") {
+    var _apply = window.apply;
+    window.apply = function () { var r = _apply.apply(this, arguments); try { if (vidOf(st.bg) && vid.getAttribute("src")) { vid.preload = isPerf() ? "metadata" : "auto"; playVid(); } } catch (e) {} return r; };
+  }
+  document.addEventListener("visibilitychange", function () { if (!vidOf(st.bg) || !vid.getAttribute("src")) return; if (document.hidden) vid.pause(); else playVid(); });
 
   applyBg(); sync(); window.pill();
   if (!st.done) setTimeout(setup, skip ? 500 : 2400);

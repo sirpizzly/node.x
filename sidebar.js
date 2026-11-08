@@ -16,10 +16,10 @@
     Object.assign({ id: "p3" }, pin("f5/ff/25/f5ff255ec5ffed5135d997583f19ca5f", "736x", "736x"))
   ];
   /* Wallpapers shared from kommodo.ai. Those links expire on 8 Dec 2026, so each one first looks for a copy of
-     its own in the wallpapers/ folder (wallpapers/1.jpg ... 8.jpg) and only then uses the kommodo link. */
+     its own in the wallpapers/ folder (wallpapers/1.jpg ... 9.jpg) and only then uses the kommodo link. */
   var KP = "https://plain-wnam-prod-public.komododecks.com/202611/08/";
   ["siscdUR5ei5MdtAdeLap", "I2wxxkWxKEKHTSsALurX", "5M0cTbJWqdephm8LhgjQ", "fNihGSqCDuHroL1IyDh7",
-   "Un4vS4NhbMXxkEDzrcOW", "1GYC8iHH8lNmBuY4mREn", "rZzOLK1GMi33MAjkxLFk", "CUsONYwu5ajgZeqbqNK5"].forEach(function (id, i) {
+   "Un4vS4NhbMXxkEDzrcOW", "1GYC8iHH8lNmBuY4mREn", "rZzOLK1GMi33MAjkxLFk", "CUsONYwu5ajgZeqbqNK5", "gJyZIfHCJqsQJmtxXpYF"].forEach(function (id, i) {
     var u = KP + id + "/image.jpg", l = "wallpapers/" + (i + 1) + ".jpg";
     PRE.push({ id: "k" + (i + 1), lo: u, th: [l, u], c: [l, u] });
   });

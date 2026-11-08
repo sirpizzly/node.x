@@ -41,7 +41,7 @@
    <section class="splash">
     <img class="logo hero-logo" alt="">
     <h1 class="hero-name nm">node.x</h1>
-    <p class="sub">yes this is made by a ddhs student.</p>
+    <p class="sub">Hundreds of free games that run right in your browser. No downloads, no sign up.</p>
     <div class="acts"><a class="btn primary" href="#games">Browse games</a><button class="btn" id="hrnd"><svg class="i"><use href="#i-shuffle"/></svg>Surprise me</button></div>
    </section>
    <section class="shelf">
@@ -245,7 +245,8 @@ function memory(el){
 const GAMES={snake:{t:"Snake",d:"Eat, grow, and do not crash.",run:snake},ttt:{t:"Tic Tac Toe",d:"Play X against the AI.",run:ttt},click:{t:"Click Speed",d:"How many clicks in 10 seconds?",run:clicker},mem:{t:"Memory Match",d:"Find all the matching pairs.",run:memory}};
 let stop=null;
 $("#gl").innerHTML=Object.entries(GAMES).map(([k,g])=>`<button class="card gc" data-g="${k}"><b>${g.t}</b><p>${g.d}</p></button>`).join("");
-function closeGame(){if(stop){stop();stop=null}tok++;if(typeof dbg!=="undefined"){dbg.length=0}$("#pdbg").hidden=true;$("#stage").hidden=true;$("#player").hidden=true;$("#pf").innerHTML="";$("#gwrap").hidden=false}
+function closeGame(){if(stop){stop();stop=null}tok++;if(typeof dbg!=="undefined"){dbg.length=0}$("#pdbg").hidden=true;$("#stage").hidden=true;$("#player").hidden=true;{const gf=$("#pf iframe");if(gf)try{gf.blur();window.focus();document.body.style.outline="none";document.body.setAttribute("tabindex","-1");document.body.focus({preventScroll:true})}catch(e){}}
+$("#pf").innerHTML="";$("#gwrap").hidden=false}
 $$(".gc").forEach(b=>b.onclick=()=>{const g=GAMES[b.dataset.g];closeGame();$("#gwrap").hidden=true;$("#stage").hidden=false;$("#gt").textContent=g.t;$("#gb").innerHTML="";stop=g.run($("#gb"))});
 $("#gback").onclick=closeGame;
 
@@ -328,6 +329,12 @@ const REP2='<script>(function(){var U=window.URL,FB="__FB__",ID="__ID__";functio
 // Debug switch: open the site as /?nofix=all (or url, idb, rep) to turn the injected helpers off and see which one a game dislikes.
 const NF=(new URLSearchParams(location.search).get("nofix")||"").toLowerCase();
 const inject=(t,fb,id)=>{const R=(NF==="all"?"":REP2.split("__FB__").join(fb||"").split("__ID__").join(id==null?"":id).split("__NF__").join(NF))+(NF==="all"||NF==="rep"?"":REP);return /<head(?:\s[^>]*)?>/i.test(t)?t.replace(/<head(?:\s[^>]*)?>/i,m=>m+R):R+t};
+// Gives the keyboard to the running game. Used when the game loads, on clicks, and when a key is pressed with focus elsewhere.
+function focusGame(){const f=$("#pf iframe");if(!f||$("#player").hidden)return;
+ try{const a=document.activeElement;if(a&&a!==f&&a!==document.body&&a.blur)a.blur();
+  window.focus();f.focus();const w=f.contentWindow;if(!w)return;w.focus();
+  const d=f.contentDocument,ae=d&&d.activeElement;
+  if(d&&(!ae||ae===d.body||ae===d.documentElement)){const c=d.querySelector("canvas");if(c){if(!c.hasAttribute("tabindex"))c.setAttribute("tabindex","0");c.style.outline="none";c.focus({preventScroll:true})}}}catch(e){}}
 async function play(g){
  if(!g.local&&g.url.indexOf("{HTML_URL}")<0){open(g.url,"_blank");return}
  closeGame();const my=++tok;curG=g;rec=[g.id,...rec.filter(x=>x!==g.id)].slice(0,24);setJ("nx_recent",rec);pfavUp();$("#gwrap").hidden=true;$("#player").hidden=false;
@@ -351,15 +358,16 @@ async function play(g){
  curHtml=inject(g.local?h:viaSW?fill(h,ASSET_J):FIX(fill(h,ASSET)),g.local?g.base:hb.cover+"/"+g.id+"/",g.id);
  const f=document.createElement("iframe");f.allow="fullscreen; autoplay; gamepad; clipboard-write; pointer-lock";f.setAttribute("allowfullscreen","");
  f.setAttribute("sandbox","allow-scripts allow-same-origin allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-forms allow-modals allow-downloads allow-orientation-lock allow-presentation");
- f.setAttribute("tabindex","0");f.onload=()=>{try{f.focus();f.contentWindow&&f.contentWindow.focus()}catch(e){}};
- f.srcdoc=curHtml;box.innerHTML="";box.appendChild(f);setTimeout(()=>{try{f.focus()}catch(e){}},300);if(!g.local&&!viaSW)note("Relay off ("+(swErr||(!window.isSecureContext?"page is not on https":!("serviceWorker" in navigator)?"browser blocks service workers":"not controlling this page"))+"; "+(swReg?"scope "+swReg.scope+", worker "+(((swReg.active||swReg.waiting||swReg.installing)||{}).state||"none"):"not registered")+"). Games load straight from the CDN instead.")}
+ f.setAttribute("tabindex","0");f.onload=()=>{focusGame();[150,600,1500,3500].forEach(t=>setTimeout(()=>{if($("#pf iframe")===f)focusGame()},t))};
+ f.srcdoc=curHtml;box.innerHTML="";box.appendChild(f);focusGame();if(!g.local&&!viaSW)note("Relay off ("+(swErr||(!window.isSecureContext?"page is not on https":!("serviceWorker" in navigator)?"browser blocks service workers":"not controlling this page"))+"; "+(swReg?"scope "+swReg.scope+", worker "+(((swReg.active||swReg.waiting||swReg.installing)||{}).state||"none"):"not registered")+"). Games load straight from the CDN instead.")}
 // problems reported from inside the game show under the player
 const dbg=[];
 function note(m){if(dbg.includes(m))return;dbg.push(m);const d=$("#pdbg");d.hidden=false;d.innerHTML="<b>Problems inside this game:</b><br>"+dbg.map(esc).join("<br>")}
 addEventListener("message",e=>{const fr=$("#pf iframe");if(!fr||e.source!==fr.contentWindow||!e.data||!e.data.nxerr)return;
  const m=String(e.data.nxerr).slice(0,220);if(dbg.includes(m)||dbg.length>=8||/user gesture is required/i.test(m))return;note(m)});
-$("#pf").addEventListener("pointerdown",()=>{const f=$("#pf iframe");if(f)try{f.focus();f.contentWindow&&f.contentWindow.focus()}catch(e){}},true);
-addEventListener("focus",()=>{const f=$("#pf iframe");if(f&&!$("#player").hidden)try{f.focus()}catch(e){}});
+$("#pf").addEventListener("pointerdown",focusGame,true);
+addEventListener("focus",focusGame);
+addEventListener("keydown",e=>{const f=$("#pf iframe");if(!f||$("#player").hidden||document.activeElement===f)return;if(e.target&&e.target.closest&&e.target.closest("input,textarea,select"))return;focusGame()},true);
 $("#pback").onclick=closeGame;
 $("#prel").onclick=()=>{if(curG)play(curG)};
 $("#pfs").onclick=()=>{const f=$("#pf iframe");if(f&&f.requestFullscreen)f.requestFullscreen()};

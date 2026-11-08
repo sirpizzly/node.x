@@ -19,7 +19,7 @@
      its own in the wallpapers/ folder (wallpapers/1.jpg ... 9.jpg) and only then uses the kommodo link. */
   var KP = "https://plain-wnam-prod-public.komododecks.com/202611/08/";
   ["siscdUR5ei5MdtAdeLap", "I2wxxkWxKEKHTSsALurX", "5M0cTbJWqdephm8LhgjQ", "fNihGSqCDuHroL1IyDh7",
-   "Un4vS4NhbMXxkEDzrcOW", "1GYC8iHH8lNmBuY4mREn", "rZzOLK1GMi33MAjkxLFk", "CUsONYwu5ajgZeqbqNK5", "gJyZIfHCJqsQJmtxXpYF"].forEach(function (id, i) {
+   "Un4vS4NhbMXxkEDzrcOW", "1GYC8iHH8lNmBuY4mREn", "rZzOLK1GMi33MAjkxLFk", "CUsONYwu5ajgZeqbqNK5", "n6px68aOY8ymZVNG5OTs"].forEach(function (id, i) {
     var u = KP + id + "/image.jpg", l = "wallpapers/" + (i + 1) + ".jpg";
     PRE.push({ id: "k" + (i + 1), lo: u, th: [l, u], c: [l, u] });
   });

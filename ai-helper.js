@@ -8,11 +8,14 @@
   const ENDPOINT = (script && script.dataset.endpoint) || window.AI_HELPER_ENDPOINT || "";
 
   const host = document.createElement("div");
-  host.style.cssText = "position:fixed;right:16px;bottom:16px;z-index:2147483647;";
+  host.style.cssText = "position:fixed;right:12px;bottom:12px;z-index:2147483647;display:flex;flex-direction:column;align-items:flex-end;gap:6px;";
   const root = host.attachShadow({ mode: "open" });
   root.innerHTML = `
     <style>
       *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+      .mini{border:0;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;line-height:1.4;
+        background:#4f46e5;color:#fff;cursor:pointer;opacity:.85;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+      .mini:hover{opacity:1;background:#6366f1}
       .panel{display:none;width:min(420px,calc(100vw - 32px));max-height:70vh;flex-direction:column;
         background:#16161d;color:#eee;border:1px solid #333;border-radius:12px;
         box-shadow:0 4px 24px rgba(0,0,0,.5);overflow:hidden}
@@ -31,15 +34,17 @@
     <div class="panel" id="panel">
       <div class="bar">
         <span class="status" id="status">Screen not shared</span>
-        <button id="share">Share screen</button>
+        <button id="share">Choose tab</button>
+        <button id="stop" style="display:none">Stop</button>
         <button id="close">✕</button>
       </div>
-      <div class="out" id="out">Click “Solve this page” and I’ll look at your screen and answer the questions on it.</div>
+      <div class="out" id="out">Click “Choose tab” to pick any tab or window, or just hit Q&amp;A / “Solve this page” and I’ll look at what you share and answer the questions on it.</div>
       <div class="row">
         <input id="q" placeholder="Ask about what's on screen…" />
         <button class="go" id="ask">Ask</button>
       </div>
-    </div>`;
+    </div>
+    <button class="mini" id="mini" title="Get the questions and answers on this page">Q&amp;A</button>`;
   const $ = (id) => root.getElementById(id);
   const panel = $("panel"), out = $("out"), statusEl = $("status"), shareBtn = $("share");
 
@@ -50,15 +55,17 @@
   function setStatus() {
     const on = !!(stream && stream.active);
     statusEl.textContent = on ? "Screen shared ●" : "Screen not shared";
-    shareBtn.textContent = on ? "Stop sharing" : "Share screen";
+    shareBtn.textContent = on ? "Switch tab" : "Choose tab";
+    $("stop").style.display = on ? "" : "none";
   }
 
   async function startShare() {
     if (stream && stream.active) return;
+    // No preferCurrentTab: the browser's picker lets you choose ANY tab, window or screen.
     stream = await navigator.mediaDevices.getDisplayMedia({
       video: { displaySurface: "browser" },
       audio: false,
-      preferCurrentTab: true,
+      selfBrowserSurface: "include",
     });
     video.srcObject = stream;
     await video.play();
@@ -111,8 +118,14 @@
     if (panel.classList.contains("open") && !busy) { panel.classList.remove("open"); return; }
     run("Solve every question visible on this page.");
   };
+  $("mini").onclick = () => {
+    if (panel.classList.contains("open") && !busy) { panel.classList.remove("open"); return; }
+    run("List every question on this page, each followed by its answer.");
+  };
   $("close").onclick = () => panel.classList.remove("open");
-  shareBtn.onclick = () => (stream && stream.active ? stopShare() : startShare().catch((e) => (out.textContent = "Error: " + e.message)));
+  // "Choose tab" / "Switch tab": pick any browser tab, window or screen to look at.
+  shareBtn.onclick = () => { stopShare(); startShare().catch((e) => { if (e.name !== "NotAllowedError") out.textContent = "Error: " + e.message; }); };
+  $("stop").onclick = stopShare;
   const ask = () => { const v = $("q").value.trim(); if (v) { $("q").value = ""; run(v); } };
   $("ask").onclick = ask;
   $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") ask(); });

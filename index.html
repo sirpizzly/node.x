@@ -245,7 +245,7 @@ let swErr="";
 if("serviceWorker" in navigator){
  navigator.serviceWorker.register("sw.js").catch(e=>{swErr=String(e&&e.message||e)});
  // a hard refresh (Ctrl+Shift+R) loads the page without the worker; one normal reload hands control to it
- navigator.serviceWorker.ready.then(()=>setTimeout(()=>{try{if(!navigator.serviceWorker.controller&&!sessionStorage.getItem("nx_swr")){sessionStorage.setItem("nx_swr","1");location.reload()}}catch(e){}},600)).catch(()=>{});
+ navigator.serviceWorker.ready.then(()=>setTimeout(()=>{try{if(navigator.serviceWorker.controller)sessionStorage.removeItem("nx_swr");else if(!sessionStorage.getItem("nx_swr")){sessionStorage.setItem("nx_swr","1");location.reload()}}catch(e){}},600)).catch(()=>{});
 }
 const swReady=async()=>{if(!("serviceWorker" in navigator))return false;
  try{await Promise.race([navigator.serviceWorker.ready,new Promise((_,r)=>setTimeout(r,3000))]);

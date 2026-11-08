@@ -28,11 +28,11 @@
     { id: "v1", u: "https://www.image2url.com/r2/default/videos/1794165774935-5083d5e6-4e6f-43fe-923d-a3ef77162782.mp4" },
     { id: "v2", u: "https://www.image2url.com/r2/default/videos/1794165612663-bb0f9d7e-3a41-4c7e-810a-79a43b80db28.mp4" },
     { id: "v3", u: "https://www.image2url.com/r2/default/videos/1794165442322-b83f6ca0-af29-4704-b611-f043d8515007.mp4" },
-    /* Wallpapers hosted in this repo's wallpapers/ folder (no audio, max 2560x1440). */
-    { id: "v4", u: "wallpapers/mahoraga.mp4" },
-    { id: "v5", u: "wallpapers/yuta.mp4" },
-    { id: "v6", u: "wallpapers/dream-chaser.mp4" },
-    { id: "v7", u: "wallpapers/toji.mp4" }
+    { id: "v4", u: "https://www.image2url.com/r2/default/videos/1794181670329-08b9cd83-91e8-4e23-a66b-936e80d555d5.mp4" },
+    { id: "v5", u: "https://www.image2url.com/r2/default/videos/1794181733890-6f322846-5f0e-4575-b148-741bb042bac9.mp4" },
+    { id: "v6", u: "https://www.image2url.com/r2/default/videos/1794181774096-f2146101-010d-43de-b614-a5b6ed7aa92f.mp4" },
+    { id: "v7", u: "https://www.image2url.com/r2/default/videos/1794181856176-23396220-cac1-44e7-a453-e8671dc56f54.mp4" },
+    { id: "v8", u: "https://www.image2url.com/r2/default/videos/1794181890696-b9f25dd3-896a-4c0d-92ca-006efb7dcd67.mp4" }
   ];
   function vidOf(id) { return VID.filter(function (x) { return x.id === id; })[0]; }
   var RM = "(prefers-reduced-motion: reduce)";

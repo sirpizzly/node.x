@@ -9,6 +9,15 @@ Then Q2/A2/Why, and so on. If no question is visible, say what you see and ask w
 
 export default {
   async fetch(req, env) {
+    try { return await handle(req, env); }
+    catch (e) {
+      return new Response(JSON.stringify({ error: "Worker error: " + e.message }), { status: 500, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+    }
+  },
+};
+
+async function handle(req, env) {
+  {
     // ALLOWED_ORIGIN can be a comma-separated list, e.g. https://yoursite.com,chrome-extension://YOUR_ID
     const list = (env.ALLOWED_ORIGIN || "*").split(",").map((x) => x.trim()).filter(Boolean);
     const anyOrigin = list.includes("*");
@@ -39,8 +48,10 @@ export default {
         "authorization": "Bearer " + env.DEEPSEEK_API_KEY,
       },
       body: JSON.stringify({
-        model: "deepseek-flash",
-        max_tokens: 1500,
+        model: "deepseek-flash",      // DeepSeek's current official model that accepts images
+        thinking: { type: "enabled" }, // reasoning on = better answers (on by default)
+        reasoning_effort: "high",
+        max_tokens: 8000,              // thinking tokens count toward this, so keep it generous
         messages: [
           { role: "system", content: SYSTEM },
           {
@@ -55,6 +66,9 @@ export default {
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) return json({ error: data.error?.message || "API error " + r.status }, 502);
-    return json({ text: data.choices?.[0]?.message?.content || "No answer returned." });
-  },
-};
+    const choice = data.choices?.[0];
+    const text = choice?.message?.content;
+    if (!text) return json({ error: choice?.finish_reason === "length" ? "The model ran out of room before answering. Try again." : "No answer returned." }, 502);
+    return json({ text });
+  }
+}

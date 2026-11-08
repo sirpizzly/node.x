@@ -61,7 +61,11 @@ Then switch to that tab. Click Refresh any time to read it again.</div>
       const res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image, prompt }) });
       const data = await res.json().catch(() => ({}));
       out.textContent = res.ok ? data.text : "Error: " + (data.error || res.status);
-    } catch (e) { out.textContent = "Error: " + e.message; }
+    } catch (e) {
+      out.textContent = e instanceof TypeError
+        ? "Couldn't reach the Worker at:\n" + ENDPOINT + "\n\nCheck: the URL is your real deployed Worker, the Worker is deployed, and ALLOWED_ORIGIN exactly matches this site's address (no trailing slash)."
+        : "Error: " + e.message;
+    }
     finally { busy = false; }
   }
   $("pick").onclick = async () => {

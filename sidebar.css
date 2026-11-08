@@ -116,8 +116,7 @@ html.no-intro #nx-intro{display:none}
 .nx-lab{margin:12px 0 8px;color:var(--fg-m);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .nx-lab:first-child{margin-top:0}
 .nx-th.vid::after{content:"LIVE";position:absolute;top:6px;left:6px;padding:1px 7px;border-radius:999px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;text-shadow:none}
-.nx-vnote{display:none;margin:-2px 0 8px;color:var(--fg-m);font-size:13px}
-.perf .nx-vnote{display:block}
+.nx-vstat{margin:8px 0 10px;color:var(--fg-m);font-size:13px;min-height:1.4em}
 
 /* ---------- first-visit setup: full pages ---------- */
 .nx-page{position:fixed;inset:0;z-index:150;display:grid;place-items:center;padding:20px;overflow:auto;background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);animation:fade .35s ease both}

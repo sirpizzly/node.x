@@ -30,8 +30,11 @@
     { id: "v3", u: "https://www.image2url.com/r2/default/videos/1794165442322-b83f6ca0-af29-4704-b611-f043d8515007.mp4" }
   ];
   function vidOf(id) { return VID.filter(function (x) { return x.id === id; })[0]; }
-  function isPerf() { return document.body.classList.contains("perf") || matchMedia("(prefers-reduced-motion: reduce)").matches; }
-  var st = { bg: "none", dim: 0.45, done: false };
+  var RM = "(prefers-reduced-motion: reduce)";
+  /* Why a wallpaper would be frozen: Performance mode, or the device's Reduce motion setting. "force" overrides both. */
+  function why() { return document.body.classList.contains("perf") ? "Performance mode is on" : matchMedia(RM).matches ? "your device has Reduce motion turned on" : ""; }
+  function isPerf() { return !st.force && !!why(); }
+  var st = { bg: "none", dim: 0.45, done: false, force: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
   function say(m) { if (typeof toast === "function") toast(m); }
@@ -68,22 +71,40 @@
     vid.onloadeddata = vid.onerror = null;
     if (vid.getAttribute("src")) { vid.pause(); vid.removeAttribute("src"); vid.load(); }
   }
-  function playVid() {
-    if (isPerf()) { vid.pause(); try { vid.currentTime = 0; } catch (e) {} return; }
-    var p = vid.play(); if (p && p.catch) p.catch(function () {});
+  function unlock() {
+    document.removeEventListener("pointerdown", unlock, true); document.removeEventListener("keydown", unlock, true);
+    if (vidOf(st.bg) && vid.getAttribute("src") && !isPerf()) { var q = vid.play(); if (q && q.catch) q.catch(function () {}); }
   }
+  function playVid() {
+    if (isPerf()) { vid.pause(); try { if (vid.currentTime > 0) vid.currentTime = 0; } catch (e) {} updStat(); return; }
+    var p = vid.play();
+    if (p && p.catch) p.catch(function () { /* browser blocked autoplay: start on the next click or key press */
+      document.addEventListener("pointerdown", unlock, true); document.addEventListener("keydown", unlock, true); updStat(); });
+  }
+  function statText() {
+    var v = vidOf(st.bg);
+    if (!v) return "Pick an animated wallpaper above to see it move.";
+    if (vid.error) return "Could not load this video (" + (vid.error.code === 4 ? "format not supported or blocked by its host" : "playback error") + ").";
+    if (vid.readyState < 2) return "Loading video...";
+    if (!vid.paused) return "Playing.";
+    var w = why();
+    return w && !st.force ? "Paused because " + w + ". Turn on \u201cPlay in Performance mode\u201d below to play it anyway." : "Paused. Click anywhere on the page to start it.";
+  }
+  function updStat() { document.querySelectorAll(".nx-vstat").forEach(function (e) { e.textContent = statText(); }); }
+  ["play", "pause", "playing", "waiting", "loadeddata", "canplay", "seeked", "error", "emptied"].forEach(function (ev) { vid.addEventListener(ev, updStat); });
   function applyBg() {
     layer.style.setProperty("--nx-dim", st.dim);
     var v = vidOf(st.bg);
     if (v) {
       layer.classList.add("is-vid"); curId = st.bg; img.dataset.s = ""; img.removeAttribute("src");
-      vid.preload = isPerf() ? "metadata" : "auto";
+      vid.preload = "auto";
       if (vid.getAttribute("src") !== v.u) {
         layer.classList.remove("on");
         vid.onloadeddata = function () { layer.classList.add("on"); root.classList.add("has-bg"); playVid(); };
         vid.onerror = function () {
           if (!vid.getAttribute("src")) return;
-          say("That animated wallpaper could not load."); stopVid(); st.bg = "none"; curId = null; save(); applyBg(); sync();
+          var code = vid.error && vid.error.code;
+          say("That animated wallpaper could not load" + (code === 4 ? " (format not supported or blocked by its host)." : ".")); stopVid(); st.bg = "none"; curId = null; save(); applyBg(); sync();
         };
         vid.src = v.u;
       } else { layer.classList.add("on"); root.classList.add("has-bg"); playVid(); }
@@ -151,7 +172,7 @@
     var up = mk("button", "btn nx-up", "Upload your own"), no = mk("button", "btn nx-none", "None");
     up.type = no.type = "button"; up.onclick = function () { file.click(); }; no.onclick = function () { setBg("none"); };
     acts.append(up, no);
-    box.append(mk("div", "nx-lab", "Images"), grid, mk("div", "nx-lab", "Animated"), mk("p", "nx-vnote", "Animated wallpapers are paused in Performance mode (you see the first frame)."), vgrid, acts);
+    box.append(mk("div", "nx-lab", "Images"), grid, mk("div", "nx-lab", "Animated"), vgrid, mk("p", "nx-vstat", statText()), acts);
     pickers.push(box); return box;
   }
   function sync() {
@@ -162,6 +183,8 @@
       if (u) u.setAttribute("aria-pressed", st.bg === "up"); if (n) n.setAttribute("aria-pressed", st.bg === "none");
     });
     document.querySelectorAll("input.nx-dim").forEach(function (i) { i.value = st.dim; });
+    document.querySelectorAll("input.nx-force").forEach(function (i) { i.checked = !!st.force; });
+    updStat();
   }
 
   /* ----- first-visit setup: full pages. Page 1 is Performance mode on its own. ----- */
@@ -246,9 +269,17 @@
     var rg = mk("input", "nx-dim"); rg.type = "range"; rg.min = 0; rg.max = 0.8; rg.step = 0.05;
     rg.oninput = function () { st.dim = +rg.value; layer.style.setProperty("--nx-dim", st.dim); save(); };
     r2.appendChild(rg);
+    var rf = mk("label", "srow", "<div><b>Play in Performance mode</b><small>Keep animated wallpapers moving even when Performance mode is on or your device asks to reduce motion.</small></div>");
+    var fc = mk("input", "nx-force"); fc.type = "checkbox"; fc.setAttribute("role", "switch"); fc.checked = !!st.force;
+    fc.onchange = function () {
+      st.force = fc.checked; save();
+      if (vidOf(st.bg) && vid.getAttribute("src")) { vid.preload = "auto"; playVid(); }
+      sync();
+    };
+    rf.appendChild(fc);
     var r3 = mk("div", "srow", "<div><b>Setup</b><small>Open the welcome menu again.</small></div>");
     var again = mk("button", "btn", "Run setup"); again.type = "button"; again.onclick = setup; r3.appendChild(again);
-    panel.append(r1, r2, r3); sec.appendChild(panel); sets.insertBefore(sec, sets.children[1] || null);
+    panel.append(r1, r2, rf, r3); sec.appendChild(panel); sets.insertBefore(sec, sets.children[1] || null);
   }
 
   /* ----- load-in intro: the overlay is in index.html and hides itself with CSS; this just cleans up ----- */
@@ -265,7 +296,7 @@
   /* when Performance mode flips, pause or resume the animated wallpaper */
   if (typeof window.apply === "function") {
     var _apply = window.apply;
-    window.apply = function () { var r = _apply.apply(this, arguments); try { if (vidOf(st.bg) && vid.getAttribute("src")) { vid.preload = isPerf() ? "metadata" : "auto"; playVid(); } } catch (e) {} return r; };
+    window.apply = function () { var r = _apply.apply(this, arguments); try { if (vidOf(st.bg) && vid.getAttribute("src")) { vid.preload = "auto"; playVid(); } } catch (e) {} return r; };
   }
   document.addEventListener("visibilitychange", function () { if (!vidOf(st.bg) || !vid.getAttribute("src")) return; if (document.hidden) vid.pause(); else playVid(); });
 

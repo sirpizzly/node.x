@@ -47,16 +47,16 @@
     <p class="sub">Hundreds of free games that run right in your browser. No downloads, no sign up.</p>
     <div class="acts"><a class="btn primary" href="#games">Browse games</a><button class="btn" id="hrnd"><svg class="i"><use href="#i-shuffle"/></svg>Surprise me</button></div>
    </section>
-   <section class="shelf">
-    <div class="shelf-h"><h3 id="hrt">Featured</h3><a class="link" href="#games">See all</a></div>
-    <div class="lgrid row" id="hr"></div>
-   </section>
   </div>
   <div class="view" id="v-games">
    <h2>Games</h2>
    <div id="gwrap">
     <div class="tags"><button class="chip tab on" data-tab="lib">Game library</button><button class="chip tab" data-tab="mini">Mini games</button></div>
     <div id="lib">
+     <section class="shelf in-lib" id="jbi" hidden>
+      <div class="shelf-h"><h3 id="hrt">Jump back in</h3></div>
+      <div class="lgrid row" id="hr"></div>
+     </section>
      <label class="field"><svg class="i"><use href="#i-search"/></svg><input id="gq" type="search" placeholder="Search games" autocomplete="off"></label>
      <div class="tags" id="gtags"><button class="chip tg on" data-tg="all">All</button><button class="chip tg" data-tg="flash">Flash</button><button class="chip tg" data-tg="emulator">Emulator</button><button class="chip tg" data-tg="port">Ports</button><button class="chip tg" data-tg="fav">Favorites</button><button class="chip tg" data-tg="recent">Recent</button><button class="chip" id="rnd"><svg class="i"><use href="#i-shuffle"/></svg>Random</button></div>
      <p class="gm" id="gcount">Loading games…</p>
@@ -358,9 +358,9 @@ function more(){const f=fl.slice(shown,shown+60);shown+=f.length;
  $("#lg").insertAdjacentHTML("beforeend",f.map(card).join(""));
  $("#more").hidden=shown>=fl.length}
 const card=(g,i)=>`<div class="lw" style="animation-delay:${i<30?i*20:0}ms"><button class="lc" data-id="${g.id}"><img loading="lazy" alt="" data-c="${esc(g.cover)}" data-n="0" src="${esc(coverUrl(g.cover,0))}" onerror="cf(this)"><span>${esc(g.name)}</span></button><button class="hrt ${favs.includes(g.id)?"on":""}" data-h="${g.id}" aria-label="Favorite"><svg class="i"><use href="#i-star"/></svg></button></div>`;
-// home shelf: recently played if there is any, otherwise the top of the list
-function homeRow(){const r=rec.map(id=>Z.find(g=>g.id===id)).filter(Boolean),list=(r.length?r:Z).slice(0,12);
- $("#hrt").textContent=r.length?"Jump back in":"Featured";$("#hr").innerHTML=list.map(card).join("")}
+// "Jump back in" shelf in the Games page: recently played games, logo and name only (hidden until you have played one)
+function homeRow(){const list=rec.map(id=>Z.find(g=>g.id===id)).filter(Boolean).slice(0,12);
+ $("#jbi").hidden=!list.length;$("#hr").innerHTML=list.map(g=>`<div class="lw"><button class="lc" data-id="${g.id}"><img loading="lazy" alt="" data-c="${esc(g.cover)}" data-n="0" src="${esc(coverUrl(g.cover,0))}" onerror="cf(this)"><span>${esc(g.name)}</span></button></div>`).join("")}
 $("#more").onclick=more;$("#gq").oninput=filt;
 function toggleFav(id){id=+id;favs=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id];setJ("nx_fav",favs);
  $$('[data-h="'+id+'"]').forEach(h=>h.classList.toggle("on",favs.includes(id)));pfavUp();if(tag==="fav"&&$("#player").hidden)filt()}
@@ -387,7 +387,7 @@ function focusGame(){const f=$("#pf iframe");if(!f||$("#player").hidden)return;
   if(d&&(!ae||ae===d.body||ae===d.documentElement)){const c=d.querySelector("canvas");if(c){if(!c.hasAttribute("tabindex"))c.setAttribute("tabindex","0");c.style.outline="none";c.focus({preventScroll:true})}}}catch(e){}}
 async function play(g){
  if(!g.local&&g.url.indexOf("{HTML_URL}")<0){open(g.url,"_blank");return}
- closeGame();const my=++tok;curG=g;rec=[g.id,...rec.filter(x=>x!==g.id)].slice(0,24);setJ("nx_recent",rec);pfavUp();$("#gwrap").hidden=true;$("#player").hidden=false;
+ closeGame();const my=++tok;curG=g;rec=[g.id,...rec.filter(x=>x!==g.id)].slice(0,24);setJ("nx_recent",rec);homeRow();pfavUp();$("#gwrap").hidden=true;$("#player").hidden=false;
  $("#pt").textContent=g.name;$("#pa").textContent=g.author?"by "+g.author:"";
  const box=$("#pf");box.innerHTML='<p class="gm">Loading '+esc(g.name)+'...</p>';scrollTo(0,0);
  let h="",hb=CDN;curUrl="";const tries=[];

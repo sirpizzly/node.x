@@ -181,5 +181,5 @@ html.vid-live *,html.vid-live *::before,html.vid-live *::after{-webkit-backdrop-
 /* home hero: centered in the window instead of sitting near the top */
 #v-home .splash{min-height:calc(100svh - 150px);justify-content:center;padding:24px 0 40px}
 @media (max-width:899px){#v-home .splash{min-height:calc(100svh - 190px)}}
-/* "Show logo" off: cleaner look */
-html.no-logo .hero-logo,html.no-logo .brand .logo{display:none}
+/* "Show logo" off: home page hides the logo, the node.x name and the tagline */
+html.no-logo .splash :is(.hero-logo,.hero-name,.sub){display:none}

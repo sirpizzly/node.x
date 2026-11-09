@@ -96,6 +96,7 @@
      <div class="s-panel">
       <div class="srow col"><div><b>Font</b><small>The typeface used across the site. A font downloads the first time you pick it.</small></div><div class="acts" id="lkFont"></div></div>
       <div class="srow col"><div><b>Text size</b><small>Make text and buttons bigger or smaller.</small></div><div class="acts" id="lkTxt"></div></div>
+      <label class="srow"><div><b>Show logo</b><small>Turn off for a cleaner look. Hides the logo on the home page and in the sidebar.</small></div><input type="checkbox" role="switch" id="lkLogo"></label>
       <label class="srow"><div><b>High contrast text</b><small>Brighter text with a dark outline, easier to read over wallpapers.</small></div><input type="checkbox" role="switch" id="lkHc"></label>
       <div class="srow col"><div><b>Corners</b><small>How round buttons, cards and panels are.</small></div><div class="acts" id="lkRad"></div></div>
       <label class="srow"><div><b>Sidebar opacity</b><small>Higher makes the sidebar more solid and its text easier to read.</small></div><input type="range" id="lkSb" min="0" max="100" step="1"></label>
@@ -142,7 +143,7 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const DEF="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#000"/><polygon points="28,74 28,26 38,26 62,58 62,26 72,26 72,74 62,74 38,42 38,74" fill="#f5f6f8"/></svg>');
 const THEMES={node:{logo:DEF,name:"node.x"}};
-const D={v:2,theme:"node",perf:false,name:"node.x",logo:"",look:{rad:"m",font:"geist",txt:"m",hc:false,sb:55,blur:12,pa:72,card:150,start:"home",intro:true,warn:false}};
+const D={v:2,theme:"node",perf:false,name:"node.x",logo:"",look:{rad:"m",font:"geist",txt:"m",hc:false,logo:true,sb:55,blur:12,pa:72,card:150,start:"home",intro:true,warn:false}};
 let S={...D,look:{...D.look}};
 try{Object.assign(S,JSON.parse(localStorage.getItem("nodex")||"{}"))}catch(e){}
 S.theme="node";S.look=Object.assign({},D.look,S.look);delete S.look.acc;
@@ -199,10 +200,11 @@ function look(){
  st.setProperty("--nx-pa",L.pa+"%");st.setProperty("--nx-pa2",Math.min(100,L.pa+8)+"%");st.setProperty("--nx-card",L.card+"px");
  if(L.txt&&L.txt!=="m")h.dataset.tz=L.txt;else delete h.dataset.tz;
  h.classList.toggle("hc",!!L.hc);
+ h.classList.toggle("no-logo",L.logo===false);
  const on=(sel,v)=>$$(sel).forEach(b=>b.classList.toggle("on",b.dataset.v===v));
  on("#lkRad .chip",L.rad);on("#lkFont .chip",L.font);on("#lkTxt .chip",L.txt);on("#lkStart .chip",L.start);
  $("#lkSb").value=L.sb;$("#lkBlur").value=L.blur;$("#lkPa").value=L.pa;$("#lkCard").value=L.card;
- $("#lkHc").checked=!!L.hc;$("#lkIntro").checked=L.intro!==false;$("#lkWarn").checked=!!L.warn;
+ $("#lkHc").checked=!!L.hc;$("#lkLogo").checked=L.logo!==false;$("#lkIntro").checked=L.intro!==false;$("#lkWarn").checked=!!L.warn;
 }
 const chips=(id,o)=>$(id).innerHTML=Object.entries(o).map(([k,v])=>`<button class="chip" type="button" data-v="${k}">${Array.isArray(v)?v[0]:v}</button>`).join("");
 chips("#lkRad",RAD);chips("#lkFont",FONTS);chips("#lkTxt",TXT);chips("#lkStart",START);
@@ -211,7 +213,7 @@ pickLook("#lkRad .chip","rad");pickLook("#lkFont .chip","font");pickLook("#lkTxt
 const range=(id,key)=>$(id).oninput=e=>{S.look[key]=+e.target.value;apply()};
 range("#lkSb","sb");range("#lkBlur","blur");range("#lkPa","pa");range("#lkCard","card");
 const flag=(id,key)=>$(id).onchange=e=>{S.look[key]=e.target.checked;apply()};
-flag("#lkHc","hc");flag("#lkIntro","intro");flag("#lkWarn","warn");
+flag("#lkHc","hc");flag("#lkLogo","logo");flag("#lkIntro","intro");flag("#lkWarn","warn");
 addEventListener("beforeunload",e=>{if(S.look.warn&&!$("#player").hidden){e.preventDefault();e.returnValue=""}});
 $("#perf").onchange=e=>{S.perf=e.target.checked;apply()};
 $("#name").oninput=e=>{S.name=e.target.value||"node.x";apply()};

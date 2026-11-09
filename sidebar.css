@@ -177,3 +177,9 @@ html[data-tz] .nl{white-space:nowrap}
 
 /* optimisation: no panel blur while a video wallpaper is playing (blur over moving video is re-drawn every frame) */
 html.vid-live *,html.vid-live *::before,html.vid-live *::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+
+/* home hero: centered in the window instead of sitting near the top */
+#v-home .splash{min-height:calc(100svh - 150px);justify-content:center;padding:24px 0 40px}
+@media (max-width:899px){#v-home .splash{min-height:calc(100svh - 190px)}}
+/* "Show logo" off: cleaner look */
+html.no-logo .hero-logo,html.no-logo .brand .logo{display:none}

@@ -244,3 +244,6 @@ label.srow { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
 	*, *::before, *::after { animation: none !important; transition-duration: 0s !important; }
 }
+
+.shelf.in-lib { margin: 0 0 18px; }
+.shelf.in-lib[hidden] { display: none; }

@@ -181,5 +181,11 @@ html.vid-live *,html.vid-live *::before,html.vid-live *::after{-webkit-backdrop-
 /* home hero: centered in the window instead of sitting near the top */
 #v-home .splash{min-height:calc(100svh - 150px);justify-content:center;padding:24px 0 40px}
 @media (max-width:899px){#v-home .splash{min-height:calc(100svh - 190px)}}
-/* "Show logo" off: home page hides the logo, the node.x name and the tagline */
-html.no-logo .splash :is(.hero-logo,.hero-name,.sub){display:none}
+/* "Show logo" off: the eye button hides everything on the home page (logo, name, tagline and both buttons) */
+html.no-logo .splash>*{display:none}
+
+/* small eye button in the corner of the home page */
+.eye{position:fixed;top:14px;right:14px;z-index:60;display:grid;place-items:center;width:36px;height:36px;padding:0;border:1px solid var(--border-2);border-radius:999px;background:color-mix(in srgb,var(--bg2) 70%,transparent);color:var(--fg);opacity:.55;text-shadow:none;transition:opacity .2s ease,background-color .2s ease}
+.eye:hover,.eye:focus-visible{opacity:1}
+.eye[hidden]{display:none}
+.eye .i{width:18px;height:18px}

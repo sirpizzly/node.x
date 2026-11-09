@@ -27,6 +27,8 @@
 	<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 12h16M4 6h16M4 18h16"/></symbol>
 	<symbol id="i-back" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></symbol>
 	<symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></symbol>
+	<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol>
+	<symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143M2 2l20 20"/></symbol>
 	<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
 </svg>
 
@@ -96,7 +98,6 @@
      <div class="s-panel">
       <div class="srow col"><div><b>Font</b><small>The typeface used across the site. A font downloads the first time you pick it.</small></div><div class="acts" id="lkFont"></div></div>
       <div class="srow col"><div><b>Text size</b><small>Make text and buttons bigger or smaller.</small></div><div class="acts" id="lkTxt"></div></div>
-      <label class="srow"><div><b>Show logo and tagline</b><small>Turn off for a cleaner home page. Hides the logo, the node.x name and the description, and leaves just the buttons.</small></div><input type="checkbox" role="switch" id="lkLogo"></label>
       <label class="srow"><div><b>High contrast text</b><small>Brighter text with a dark outline, easier to read over wallpapers.</small></div><input type="checkbox" role="switch" id="lkHc"></label>
       <div class="srow col"><div><b>Corners</b><small>How round buttons, cards and panels are.</small></div><div class="acts" id="lkRad"></div></div>
       <label class="srow"><div><b>Sidebar opacity</b><small>Higher makes the sidebar more solid and its text easier to read.</small></div><input type="range" id="lkSb" min="0" max="100" step="1"></label>
@@ -137,6 +138,7 @@
  <div class="m-body"><h2 id="ask-t"></h2><p id="ask-p"></p>
   <div class="acts"><button class="btn" id="ask-no">Cancel</button><button class="btn primary danger" id="ask-ok">OK</button></div></div>
 </dialog>
+<button class="eye" id="eye" type="button" aria-label="Hide home page text and buttons" aria-pressed="false"><svg class="i"><use href="#i-eye"/></svg></button>
 <div id="toast" role="status"></div>
 
 <script>
@@ -201,10 +203,11 @@ function look(){
  if(L.txt&&L.txt!=="m")h.dataset.tz=L.txt;else delete h.dataset.tz;
  h.classList.toggle("hc",!!L.hc);
  h.classList.toggle("no-logo",L.logo===false);
+ {const e=$("#eye");if(e){const off=L.logo===false;e.setAttribute("aria-pressed",off);e.setAttribute("aria-label",off?"Show home page text and buttons":"Hide home page text and buttons");e.innerHTML=`<svg class="i"><use href="#${off?"i-eye-off":"i-eye"}"/></svg>`}}
  const on=(sel,v)=>$$(sel).forEach(b=>b.classList.toggle("on",b.dataset.v===v));
  on("#lkRad .chip",L.rad);on("#lkFont .chip",L.font);on("#lkTxt .chip",L.txt);on("#lkStart .chip",L.start);
  $("#lkSb").value=L.sb;$("#lkBlur").value=L.blur;$("#lkPa").value=L.pa;$("#lkCard").value=L.card;
- $("#lkHc").checked=!!L.hc;$("#lkLogo").checked=L.logo!==false;$("#lkIntro").checked=L.intro!==false;$("#lkWarn").checked=!!L.warn;
+ $("#lkHc").checked=!!L.hc;$("#lkIntro").checked=L.intro!==false;$("#lkWarn").checked=!!L.warn;
 }
 const chips=(id,o)=>$(id).innerHTML=Object.entries(o).map(([k,v])=>`<button class="chip" type="button" data-v="${k}">${Array.isArray(v)?v[0]:v}</button>`).join("");
 chips("#lkRad",RAD);chips("#lkFont",FONTS);chips("#lkTxt",TXT);chips("#lkStart",START);
@@ -213,9 +216,10 @@ pickLook("#lkRad .chip","rad");pickLook("#lkFont .chip","font");pickLook("#lkTxt
 const range=(id,key)=>$(id).oninput=e=>{S.look[key]=+e.target.value;apply()};
 range("#lkSb","sb");range("#lkBlur","blur");range("#lkPa","pa");range("#lkCard","card");
 const flag=(id,key)=>$(id).onchange=e=>{S.look[key]=e.target.checked;apply()};
-flag("#lkHc","hc");flag("#lkLogo","logo");flag("#lkIntro","intro");flag("#lkWarn","warn");
+flag("#lkHc","hc");flag("#lkIntro","intro");flag("#lkWarn","warn");
 addEventListener("beforeunload",e=>{if(S.look.warn&&!$("#player").hidden){e.preventDefault();e.returnValue=""}});
 $("#perf").onchange=e=>{S.perf=e.target.checked;apply()};
+$("#eye").onclick=()=>{S.look.logo=S.look.logo===false;apply()};
 $("#name").oninput=e=>{S.name=e.target.value||"node.x";apply()};
 $("#logoApply").onclick=()=>{const v=$("#logoUrl").value.trim();if(v){S.logo=v;apply();toast("Logo updated")}};
 $("#logoReset").onclick=()=>{S.logo="";apply()};
@@ -245,7 +249,7 @@ function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show"
 
 // the white pill slides under the current page in the top bar
 function pill(){const c=$(".nl.act")||$(".nl"),p=$("#pill");p.style.transform=`translateX(${c.offsetLeft}px)`;p.style.width=c.offsetWidth+"px"}
-function show(v){if(!$("#v-"+v))v="home";$$(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));$$(".nl").forEach(l=>{l.classList.toggle("act",l.dataset.v===v);l.toggleAttribute("aria-current",l.dataset.v===v)});scrollTo(0,0);if(v!=="games")closeGame();if(v==="games"&&!loaded)loadLib();pill()}
+function show(v){if(!$("#v-"+v))v="home";$("#eye").hidden=v!=="home";$$(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));$$(".nl").forEach(l=>{l.classList.toggle("act",l.dataset.v===v);l.toggleAttribute("aria-current",l.dataset.v===v)});scrollTo(0,0);if(v!=="games")closeGame();if(v==="games"&&!loaded)loadLib();pill()}
 addEventListener("hashchange",()=>show(location.hash.slice(1)));addEventListener("resize",pill);
 
 // games

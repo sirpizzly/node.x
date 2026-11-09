@@ -30,7 +30,7 @@
     { id: "v3", u: "https://www.image2url.com/r2/default/videos/1794165442322-b83f6ca0-af29-4704-b611-f043d8515007.mp4" },
     { id: "v4", u: "https://www.image2url.com/r2/default/videos/1794181670329-08b9cd83-91e8-4e23-a66b-936e80d555d5.mp4" },
     { id: "v5", u: "https://www.image2url.com/r2/default/videos/1794181733890-6f322846-5f0e-4575-b148-741bb042bac9.mp4" },
-    { id: "v6", u: "https://www.image2url.com/r2/default/videos/1794181774096-f2146101-010d-43de-b614-a5b6ed7aa92f.mp4" },
+    { id: "v6", u: "https://www.image2url.com/r2/default/videos/1794182323370-5f75ac2a-c3a4-4371-bde0-3c4e1d247b6f.mp4" },
     { id: "v7", u: "https://www.image2url.com/r2/default/videos/1794181856176-23396220-cac1-44e7-a453-e8671dc56f54.mp4" },
     { id: "v8", u: "https://www.image2url.com/r2/default/videos/1794181890696-b9f25dd3-896a-4c0d-92ca-006efb7dcd67.mp4" }
   ];
@@ -78,9 +78,12 @@
   }
   function unlock() {
     document.removeEventListener("pointerdown", unlock, true); document.removeEventListener("keydown", unlock, true);
-    if (vidOf(st.bg) && vid.getAttribute("src") && !isPerf()) { var q = vid.play(); if (q && q.catch) q.catch(function () {}); }
+    if (vidOf(st.bg) && vid.getAttribute("src") && !isPerf() && !inGame()) { var q = vid.play(); if (q && q.catch) q.catch(function () {}); }
   }
+  /* a game is open (library player or mini game): the wallpaper stays paused so the game gets the full CPU/GPU */
+  function inGame() { var a = document.getElementById("player"), b = document.getElementById("stage"); return !!((a && !a.hidden) || (b && !b.hidden)); }
   function playVid() {
+    if (inGame()) { vid.pause(); updStat(); return; }
     if (isPerf()) { vid.pause(); try { if (vid.currentTime > 0) vid.currentTime = 0; } catch (e) {} updStat(); return; }
     var p = vid.play();
     if (p && p.catch) p.catch(function () { /* browser blocked autoplay: start on the next click or key press */
@@ -303,6 +306,11 @@
     var _apply = window.apply;
     window.apply = function () { var r = _apply.apply(this, arguments); try { if (vidOf(st.bg) && vid.getAttribute("src")) { vid.preload = "auto"; playVid(); } } catch (e) {} return r; };
   }
+  /* pause when a game opens, resume when it closes */
+  ["player", "stage"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) new MutationObserver(function () { if (vidOf(st.bg) && vid.getAttribute("src")) { if (inGame()) { vid.pause(); updStat(); } else playVid(); } }).observe(el, { attributes: true, attributeFilter: ["hidden"] });
+  });
   document.addEventListener("visibilitychange", function () { if (!vidOf(st.bg) || !vid.getAttribute("src")) return; if (document.hidden) vid.pause(); else playVid(); });
 
   applyBg(); sync(); window.pill();

@@ -100,6 +100,10 @@
   }
   function updStat() { document.querySelectorAll(".nx-vstat").forEach(function (e) { e.textContent = statText(); }); }
   ["play", "pause", "playing", "waiting", "loadeddata", "canplay", "seeked", "error", "emptied"].forEach(function (ev) { vid.addEventListener(ev, updStat); });
+  /* while a video wallpaper is actually playing, panel blur is switched off (see sidebar.css): re-blurring every frame is the biggest GPU cost */
+  vid.disableRemotePlayback = true;
+  function live() { root.classList.toggle("vid-live", !!vid.getAttribute("src") && !vid.paused && !vid.ended); }
+  ["playing", "pause", "emptied", "error", "ended"].forEach(function (ev) { vid.addEventListener(ev, live); });
   function applyBg() {
     layer.style.setProperty("--nx-dim", st.dim);
     var v = vidOf(st.bg);
@@ -171,7 +175,10 @@
       var b = mk("button", "nx-th vid"), tv = document.createElement("video");
       b.type = "button"; b.dataset.id = p.id; b.setAttribute("aria-label", "Animated background " + (i + 1));
       tv.muted = true; tv.loop = true; tv.playsInline = true; tv.preload = "metadata"; tv.tabIndex = -1; tv.setAttribute("aria-hidden", "true");
-      tv.dataset.src = p.u + "#t=0.1"; if (io) io.observe(tv); else { tv.src = tv.dataset.src; delete tv.dataset.src; }
+      tv.dataset.src = p.u + "#t=0.1";
+      var sv = navigator.connection && navigator.connection.saveData; /* Data Saver: skip preview downloads until hover/tap */
+      if (sv) { var ld = function () { if (tv.dataset.src) { tv.src = tv.dataset.src; delete tv.dataset.src; } }; b.addEventListener("pointerenter", ld, { once: true }); b.addEventListener("focus", ld, { once: true }); }
+      else if (io) io.observe(tv); else { tv.src = tv.dataset.src; delete tv.dataset.src; }
       b.appendChild(tv);
       b.onmouseenter = function () { if (!isPerf()) { var q = tv.play(); if (q && q.catch) q.catch(function () {}); } };
       b.onmouseleave = function () { tv.pause(); };

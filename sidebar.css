@@ -6,7 +6,7 @@ html:not(.intro-done){--base:1.5s}
 @keyframes nl-in{from{opacity:0;transform:translate3d(-6px,0,0)}}
 
 /* ---------- background image (behind everything, UI becomes see-through) ---------- */
-#nx-bg{position:fixed;inset:0;z-index:-1;background:#000;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .6s var(--ease),visibility 0s .6s}
+#nx-bg{position:fixed;inset:0;z-index:-1;contain:strict;background:#000;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .6s var(--ease),visibility 0s .6s}
 #nx-bg.on{opacity:1;visibility:visible;transition-delay:0s}
 #nx-bg::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,var(--nx-dim,.35))}
 html.has-bg body{background:transparent}
@@ -15,7 +15,7 @@ html.has-bg{
  --surface-2:color-mix(in srgb,color-mix(in srgb,var(--bg2),var(--fg) 8%) var(--nx-pa2,80%),transparent);
 }
 #nx-bg img,#nx-bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-#nx-bg video{display:none}
+#nx-bg video{display:none;pointer-events:none;transform:translateZ(0)}
 #nx-bg.is-vid video{display:block}
 #nx-bg.is-vid img{display:none}
 
@@ -174,3 +174,6 @@ html[data-tz] .nl{white-space:nowrap}
 
 /* Game card size (setting) */
 @media (min-width:601px){.lgrid:not(.row){grid-template-columns:repeat(auto-fill,minmax(var(--nx-card,150px),1fr))}}
+
+/* optimisation: no panel blur while a video wallpaper is playing (blur over moving video is re-drawn every frame) */
+html.vid-live *,html.vid-live *::before,html.vid-live *::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}

@@ -353,9 +353,13 @@ const FLUX_COVER="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gIYSUNDX1B
 const LOCAL=[{id:900001,name:"Flux Client",author:"",cover:FLUX_COVER,local:true,
  base:"https://cdn.jsdelivr.net/gh/sirpizzly/flux-client@main/",
  urls:["https://cdn.jsdelivr.net/gh/sirpizzly/flux-client@main/fluxclient.html","https://raw.githubusercontent.com/sirpizzly/flux-client/main/fluxclient.html"]}];
-async function loadLib(){loaded=true;
- try{Z=[...LOCAL,...(await getList()).filter(g=>g.id>=0&&g.url&&g.cover)];filt();homeRow()}
- catch(e){loaded=false;Z=[...LOCAL];filt();homeRow();$("#gcount").innerHTML='<span class="err">Couldn\'t load the game list. Check your connection, then open Games again.</span>'}}
+// extra games from the NEBULACDN repo (list in nebula-games.json: [id, name, file]); each is one html file
+const NB=["https://cdn.jsdelivr.net/gh/sirpizzly/NEBULACDN@main/games/","https://cdn.jsdelivr.net/gh/GoatTech-42/NEBULACDN@main/games/","https://raw.githubusercontent.com/sirpizzly/NEBULACDN/main/games/","https://raw.githubusercontent.com/GoatTech-42/NEBULACDN/main/games/"];
+async function getNebula(){try{const r=await tf("nebula-games.json",12000);if(!r.ok)return[];const j=await r.json();
+ return j.map(([id,name,f])=>({id,name,author:"",cover:DEF,local:true,base:NB[0],urls:NB.map(b=>b+f)}))}catch(e){return[]}}
+async function loadLib(){loaded=true;const NBG=getNebula();
+ try{Z=[...LOCAL,...(await getList()).filter(g=>g.id>=0&&g.url&&g.cover),...(await NBG)];filt();homeRow()}
+ catch(e){loaded=false;Z=[...LOCAL,...(await NBG)];filt();homeRow();$("#gcount").innerHTML='<span class="err">Couldn\'t load the game list. Check your connection, then open Games again.</span>'}}
 function filt(){const q=$("#gq").value.trim().toLowerCase();
  let base=Z;if(tag==="fav")base=Z.filter(g=>favs.includes(g.id));else if(tag==="recent")base=rec.map(id=>Z.find(g=>g.id===id)).filter(Boolean);else if(tag!=="all")base=Z.filter(g=>[].concat(g.special||[]).some(x=>String(x).toLowerCase().indexOf(tag)===0));
  fl=base.filter(g=>!q||g.name.toLowerCase().includes(q));

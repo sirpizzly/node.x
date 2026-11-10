@@ -59,8 +59,12 @@
       <div class="shelf-h"><h3 id="hrt">Jump back in</h3></div>
       <div class="lgrid row" id="hr"></div>
      </section>
+     <section class="shelf in-lib" id="nwi" hidden>
+      <div class="shelf-h"><h3>New games</h3><button class="chip" id="nwall">See all</button></div>
+      <div class="lgrid row" id="nwr"></div>
+     </section>
      <label class="field"><svg class="i"><use href="#i-search"/></svg><input id="gq" type="search" placeholder="Search games" autocomplete="off"></label>
-     <div class="tags" id="gtags"><button class="chip tg on" data-tg="all">All</button><button class="chip tg" data-tg="flash">Flash</button><button class="chip tg" data-tg="emulator">Emulator</button><button class="chip tg" data-tg="port">Ports</button><button class="chip tg" data-tg="fav">Favorites</button><button class="chip tg" data-tg="recent">Recent</button><button class="chip" id="rnd"><svg class="i"><use href="#i-shuffle"/></svg>Random</button></div>
+     <div class="tags" id="gtags"><button class="chip tg on" data-tg="all">All</button><button class="chip tg" data-tg="new">New</button><button class="chip tg" data-tg="flash">Flash</button><button class="chip tg" data-tg="emulator">Emulator</button><button class="chip tg" data-tg="port">Ports</button><button class="chip tg" data-tg="fav">Favorites</button><button class="chip tg" data-tg="recent">Recent</button><button class="chip" id="rnd"><svg class="i"><use href="#i-shuffle"/></svg>Random</button></div>
      <p class="gm" id="gcount">Loading games…</p>
      <div class="lgrid" id="lg"></div>
      <div class="more"><button class="btn" id="more" hidden>Load more</button></div>
@@ -356,7 +360,7 @@ const LOCAL=[{id:900001,name:"Flux Client",author:"",cover:FLUX_COVER,local:true
 // extra games from the NEBULACDN repo (list in nebula-games.json: [id, name, file]); each is one html file
 const NB=["https://cdn.jsdelivr.net/gh/sirpizzly/NEBULACDN@main/games/","https://cdn.jsdelivr.net/gh/GoatTech-42/NEBULACDN@main/games/","https://raw.githubusercontent.com/sirpizzly/NEBULACDN/main/games/","https://raw.githubusercontent.com/GoatTech-42/NEBULACDN/main/games/"];
 async function getNebula(){try{const r=await tf("nebula-games.json",12000);if(!r.ok)return[];const j=await r.json();
- return j.map(([id,name,f])=>({id,name,author:"",cover:DEF,local:true,base:NB[0],urls:NB.map(b=>b+f)}))}catch(e){return[]}}
+ return j.map(([id,name,f,t])=>({id,name,author:"",cover:DEF,local:true,special:["new",...String(t||"").split(",").filter(Boolean)],base:NB[0],urls:NB.map(b=>b+f)}))}catch(e){return[]}}
 async function loadLib(){loaded=true;const NBG=getNebula();
  try{Z=[...LOCAL,...(await getList()).filter(g=>g.id>=0&&g.url&&g.cover),...(await NBG)];filt();homeRow()}
  catch(e){loaded=false;Z=[...LOCAL,...(await NBG)];filt();homeRow();$("#gcount").innerHTML='<span class="err">Couldn\'t load the game list. Check your connection, then open Games again.</span>'}}
@@ -369,7 +373,12 @@ function more(){const f=fl.slice(shown,shown+60);shown+=f.length;
  $("#more").hidden=shown>=fl.length}
 const card=(g,i)=>`<div class="lw" style="animation-delay:${i<30?i*20:0}ms"><button class="lc" data-id="${g.id}"><img loading="lazy" alt="" data-c="${esc(g.cover)}" data-n="0" src="${esc(coverUrl(g.cover,0))}" onerror="cf(this)"><span>${esc(g.name)}</span></button><button class="hrt ${favs.includes(g.id)?"on":""}" data-h="${g.id}" aria-label="Favorite"><svg class="i"><use href="#i-star"/></svg></button></div>`;
 // "Jump back in" shelf in the Games page: recently played games, logo and name only (hidden until you have played one)
-function homeRow(){const list=rec.map(id=>Z.find(g=>g.id===id)).filter(Boolean).slice(0,12);
+let NEWPICK=null;
+$("#nwall").onclick=()=>{const b=$('.tg[data-tg="new"]');if(b)b.click();scrollTo({top:$("#gq").getBoundingClientRect().top+scrollY-80,behavior:"smooth"})};
+function homeRow(){
+ if(!NEWPICK){const n=Z.filter(g=>[].concat(g.special||[]).includes("new"));if(n.length)NEWPICK=n.sort(()=>Math.random()-.5).slice(0,12)}
+ if(NEWPICK){$("#nwi").hidden=false;$("#nwr").innerHTML=NEWPICK.map(g=>`<div class="lw"><button class="lc" data-id="${g.id}"><img loading="lazy" alt="" data-c="${esc(g.cover)}" data-n="0" src="${esc(coverUrl(g.cover,0))}" onerror="cf(this)"><span>${esc(g.name)}</span></button></div>`).join("")}
+ const list=rec.map(id=>Z.find(g=>g.id===id)).filter(Boolean).slice(0,12);
  $("#jbi").hidden=!list.length;$("#hr").innerHTML=list.map(g=>`<div class="lw"><button class="lc" data-id="${g.id}"><img loading="lazy" alt="" data-c="${esc(g.cover)}" data-n="0" src="${esc(coverUrl(g.cover,0))}" onerror="cf(this)"><span>${esc(g.name)}</span></button></div>`).join("")}
 $("#more").onclick=more;$("#gq").oninput=filt;
 function toggleFav(id){id=+id;favs=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id];setJ("nx_fav",favs);
@@ -377,7 +386,7 @@ function toggleFav(id){id=+id;favs=favs.includes(id)?favs.filter(x=>x!==id):[...
 function pfavUp(){const on=curG&&favs.includes(curG.id);$("#pfav").setAttribute("aria-pressed",!!on);$("#pfav").innerHTML=`<svg class="i"><use href="#i-star"/></svg>${on?"Favorited":"Favorite"}`}
 $("#pfav").onclick=()=>{if(curG)toggleFav(curG.id)};
 $("#rnd").onclick=$("#hrnd").onclick=()=>{if(Z.length){location.hash="games";play(Z[Math.random()*Z.length|0])}};
-$("#lg").onclick=$("#hr").onclick=e=>{const h=e.target.closest(".hrt");if(h){e.stopPropagation();toggleFav(h.dataset.h);return}const b=e.target.closest(".lc");if(!b)return;const g=Z.find(x=>x.id==b.dataset.id);if(g){location.hash="games";play(g)}};
+$("#lg").onclick=$("#hr").onclick=$("#nwr").onclick=e=>{const h=e.target.closest(".hrt");if(h){e.stopPropagation();toggleFav(h.dataset.h);return}const b=e.target.closest(".lc");if(!b)return;const g=Z.find(x=>x.id==b.dataset.id);if(g){location.hash="games";play(g)}};
 $$(".tg").forEach(b=>b.onclick=()=>{tag=b.dataset.tg;$$(".tg").forEach(x=>x.classList.toggle("on",x===b));filt()});
 $$(".tab").forEach(b=>b.onclick=()=>{$$(".tab").forEach(x=>x.classList.toggle("on",x===b));$("#lib").hidden=b.dataset.tab!=="lib";$("#mini").hidden=b.dataset.tab!=="mini"});
 let GJ=null;

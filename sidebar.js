@@ -46,7 +46,7 @@
   function mk(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e; }
 
   /* ----- sidebar: icons + vertical pill ----- */
-  var IC = { home: "i-home", games: "i-games", credits: "i-heart", settings: "i-settings" };
+  var IC = { home: "i-home", games: "i-games", reviews: "i-star", credits: "i-heart", settings: "i-settings" };
   document.querySelectorAll("#nav .nl").forEach(function (a) {
     var id = IC[a.dataset.v];
     if (id) a.insertAdjacentHTML("afterbegin", '<svg class="i nx-ic" aria-hidden="true"><use href="#' + id + '"/></svg>');

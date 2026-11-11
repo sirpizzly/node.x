@@ -37,6 +37,7 @@
  <nav id="nav"><i id="pill"></i>
   <a class="nl" href="#home" data-v="home">Home</a>
   <a class="nl" href="#games" data-v="games">Games</a>
+  <a class="nl" href="browser.html">Browser</a>
   <a class="nl" href="#credits" data-v="credits">Credits</a>
   <a class="nl" href="#settings" data-v="settings">Settings</a>
  </nav>
@@ -359,8 +360,12 @@ const LOCAL=[{id:900001,name:"Flux Client",author:"",cover:FLUX_COVER,local:true
  urls:["https://cdn.jsdelivr.net/gh/sirpizzly/flux-client@main/fluxclient.html","https://raw.githubusercontent.com/sirpizzly/flux-client/main/fluxclient.html"]}];
 // extra games from the NEBULACDN repo (list in nebula-games.json: [id, name, file]); each is one html file
 const NB=["https://cdn.jsdelivr.net/gh/sirpizzly/NEBULACDN@main/games/","https://cdn.jsdelivr.net/gh/GoatTech-42/NEBULACDN@main/games/","https://raw.githubusercontent.com/sirpizzly/NEBULACDN/main/games/","https://raw.githubusercontent.com/GoatTech-42/NEBULACDN/main/games/"];
+// generated cover for games without an image: colored tile with the game's initials
+function tile(n){let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))>>>0;const w=n.replace(/[^A-Za-z0-9 ]/g,"").trim().split(/\s+/).filter(Boolean);
+ const t=(w.length>1?w[0][0]+w[1][0]:(w[0]||"?").slice(0,2)).toUpperCase(),a=h%360,b=(a+40)%360;
+ return "data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl('+a+',60%,38%)"/><stop offset="1" stop-color="hsl('+b+',65%,22%)"/></linearGradient></defs><rect width="100" height="100" fill="url(#g)"/><text x="50" y="50" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-weight="700" font-size="38" fill="#fff" fill-opacity=".9">'+t.replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</text></svg>')}
 async function getNebula(){try{const r=await tf("nebula-games.json",12000);if(!r.ok)return[];const j=await r.json();
- return j.map(([id,name,f,t])=>({id,name,author:"",cover:DEF,local:true,special:["new",...String(t||"").split(",").filter(Boolean)],base:NB[0],urls:NB.map(b=>b+f)}))}catch(e){return[]}}
+ return j.map(([id,name,f,t])=>({id,name,author:"",cover:tile(name),local:true,special:["new",...String(t||"").split(",").filter(Boolean)],base:NB[0],urls:NB.map(b=>b+f)}))}catch(e){return[]}}
 async function loadLib(){loaded=true;const NBG=getNebula();
  try{Z=[...LOCAL,...(await getList()).filter(g=>g.id>=0&&g.url&&g.cover),...(await NBG)];filt();homeRow()}
  catch(e){loaded=false;Z=[...LOCAL,...(await NBG)];filt();homeRow();$("#gcount").innerHTML='<span class="err">Couldn\'t load the game list. Check your connection, then open Games again.</span>'}}

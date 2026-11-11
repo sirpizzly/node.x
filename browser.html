@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Browser · node.x</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23000'/%3E%3Ccircle cx='50' cy='50' r='26' fill='none' stroke='%23fff' stroke-width='8'/%3E%3Cpath d='M24 50h52M50 24c14 16 14 36 0 52M50 24c-14 16-14 36 0 52' fill='none' stroke='%23fff' stroke-width='5'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<style>
+:root{--chrome:color-mix(in srgb,var(--bg,#0e0e10) 88%,#fff 12%);--chrome-2:color-mix(in srgb,var(--bg,#0e0e10) 94%,#fff 6%);--ln:color-mix(in srgb,var(--fg,#ededef) 14%,transparent)}
+html,body{height:100%;margin:0;overflow:hidden}
+body{font-family:"Geist",system-ui,sans-serif;background:var(--bg,#0e0e10);color:var(--fg,#ededef)}
+.app{display:flex;flex-direction:column;height:100%;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+.tabs{display:flex;align-items:flex-end;gap:4px;padding:8px 8px 0;background:var(--bg,#0e0e10);overflow-x:auto;scrollbar-width:none;flex:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;flex:0 1 200px;min-width:96px;height:36px;display:flex;align-items:center;gap:8px;padding:0 8px 0 12px;border-radius:12px 12px 0 0;color:var(--fg-d,#a3a3ad);cursor:pointer;user-select:none;transition:background .2s,color .2s;animation:pop .22s var(--ease,ease) both}
+.tab:hover{background:var(--chrome-2)}
+.tab.on{background:var(--chrome);color:var(--fg,#ededef)}
+.tab .fv{width:16px;height:16px;border-radius:5px;flex:none;display:grid;place-items:center;font-size:10px;font-weight:700;background:var(--ln);color:var(--fg,#ededef)}
+.tab .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.tab .x{width:20px;height:20px;border:0;border-radius:6px;background:none;display:grid;place-items:center;color:inherit;opacity:.6;padding:0}
+.tab .x:hover{background:var(--ln);opacity:1}
+.tab.on::before,.tab.on::after{content:"";position:absolute;bottom:0;width:10px;height:10px;pointer-events:none}
+.tab.on::before{left:-10px;background:radial-gradient(circle at 0 0,transparent 10px,var(--chrome) 10.5px)}
+.tab.on::after{right:-10px;background:radial-gradient(circle at 100% 0,transparent 10px,var(--chrome) 10.5px)}
+.plus{flex:none;width:30px;height:30px;margin:0 0 3px 2px;border:0;border-radius:9px;background:none;color:var(--fg-m,#cfcfd6);display:grid;place-items:center;padding:0}
+.plus:hover{background:var(--chrome-2)}
+.bar{display:flex;align-items:center;gap:4px;padding:7px 8px;background:var(--chrome);border-bottom:1px solid var(--ln);flex:none}
+.ib{width:34px;height:34px;border:0;border-radius:10px;background:none;color:var(--fg-m,#cfcfd6);display:grid;place-items:center;padding:0;flex:none;transition:background .15s,opacity .15s}
+.ib:hover:not(:disabled){background:var(--ln);color:var(--fg,#ededef)}
+.ib:disabled{opacity:.3;cursor:default}
+.ib:active:not(:disabled){transform:scale(.94)}
+.addr{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:999px;background:var(--bg,#0e0e10);border:1px solid transparent;transition:border-color .15s}
+.addr:focus-within{border-color:var(--fg-d,#a3a3ad)}
+.addr input{flex:1;min-width:0;height:100%;border:0;outline:0;background:none;font-size:14px;color:var(--fg,#ededef)}
+.addr input::placeholder{color:var(--fg-d,#a3a3ad)}
+.addr .i{color:var(--fg-d,#a3a3ad)}
+.stage{position:relative;flex:1;min-height:0;background:var(--bg,#0e0e10)}
+.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}
+.stage iframe.on{display:block}
+.load{position:absolute;top:0;left:0;height:2px;width:0;background:var(--fg,#ededef);opacity:0;z-index:3;pointer-events:none}
+.load.run{opacity:1;animation:ld 1.6s ease-out forwards}
+.ntp{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px;text-align:center;overflow:auto}
+.ntp.on{display:flex}
+.ntp h1{margin:0;font-size:clamp(34px,7vw,56px)}
+.ntp form{width:min(560px,100%);display:flex;align-items:center;gap:10px;height:48px;padding:0 18px;border-radius:999px;background:var(--chrome);border:1px solid var(--ln)}
+.ntp form:focus-within{border-color:var(--fg-d,#a3a3ad)}
+.ntp form input{flex:1;border:0;outline:0;background:none;font-size:16px;color:var(--fg,#ededef)}
+.quick{display:grid;grid-template-columns:repeat(auto-fill,88px);justify-content:center;gap:14px;width:min(560px,100%)}
+.q{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 4px;border:0;border-radius:14px;background:none;font-size:12px;color:var(--fg-m,#cfcfd6);transition:background .15s,transform .15s}
+.q:hover{background:var(--chrome-2);transform:translateY(-2px)}
+.q b{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:18px;color:#fff}
+.hint{font-size:12px;color:var(--fg-d,#a3a3ad);max-width:520px;line-height:1.5}
+.hint code{background:var(--chrome);padding:2px 6px;border-radius:6px}
+dialog{border:1px solid var(--ln);border-radius:16px;background:var(--chrome);color:var(--fg,#ededef);padding:22px;width:min(480px,92vw)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog h2{margin:0 0 6px;font-size:18px}
+dialog p{margin:0 0 14px;font-size:13px;line-height:1.5;color:var(--fg-m,#cfcfd6)}
+dialog input{width:100%;box-sizing:border-box;height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--ln);background:var(--bg,#0e0e10);color:var(--fg,#ededef);font-size:14px}
+dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+dialog .row button{height:38px;padding:0 16px;border-radius:10px;border:1px solid var(--ln);background:none;color:var(--fg,#ededef)}
+dialog .row .go{background:var(--fg,#ededef);color:var(--bg,#0e0e10);border-color:var(--fg,#ededef)}
+@keyframes pop{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes ld{0%{width:0}60%{width:80%}100%{width:96%}}
+@media (max-width:560px){.hide-s{display:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <defs>
+  <symbol id="b" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="f" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="r" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="h" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></symbol>
+  <symbol id="p" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="s" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="o" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="m" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="g" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="n" viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></symbol>
+ </defs>
+</svg>
+
+<div class="app">
+ <div class="tabs" id="tabs"><button class="plus" id="plus" title="New tab (Alt+T)"><svg class="i"><use href="#p"/></svg></button></div>
+ <div class="bar">
+  <button class="ib" id="back" title="Back" disabled><svg class="i"><use href="#b"/></svg></button>
+  <button class="ib" id="fwd" title="Forward" disabled><svg class="i"><use href="#f"/></svg></button>
+  <button class="ib" id="reload" title="Reload"><svg class="i"><use href="#r"/></svg></button>
+  <button class="ib hide-s" id="home" title="New tab page"><svg class="i"><use href="#h"/></svg></button>
+  <label class="addr"><svg class="i"><use href="#s"/></svg><input id="url" type="text" placeholder="Search or enter address" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+  <button class="ib hide-s" id="ext" title="Open this page in a real browser tab"><svg class="i"><use href="#o"/></svg></button>
+  <button class="ib hide-s" id="full" title="Fullscreen"><svg class="i"><use href="#m"/></svg></button>
+  <button class="ib" id="cfg" title="Proxy settings"><svg class="i"><use href="#g"/></svg></button>
+  <a class="ib" href="index.html" title="Back to node.x" style="text-decoration:none"><svg class="i"><use href="#x"/></svg></a>
+ </div>
+ <div class="stage" id="stage">
+  <div class="load" id="load"></div>
+  <div class="ntp on" id="ntp">
+   <h1>node.x browser</h1>
+   <form id="nf"><svg class="i"><use href="#s"/></svg><input id="nq" placeholder="Search the web or type a URL" autocomplete="off" spellcheck="false"></form>
+   <div class="quick" id="quick"></div>
+   <p class="hint" id="hint"></p>
+  </div>
+ </div>
+</div>
+
+<dialog id="dlg">
+ <h2>Proxy settings</h2>
+ <p>Where your proxy lives. Use <code>{encoded}</code> where the website address goes (or <code>{url}</code> for the raw address). Saved in this browser only.</p>
+ <input id="pat" spellcheck="false" autocomplete="off">
+ <div class="row"><button id="rst">Reset</button><button id="cx">Cancel</button><button class="go" id="sv">Save</button></div>
+</dialog>
+
+<script>
+const $=s=>document.querySelector(s);
+const DEFAULT_PATTERN="http://127.0.0.1:14224/?url={encoded}"; // <-- change if your proxy uses a different address format
+const SEARCH="https://duckduckgo.com/?q=";
+const QUICK=[["DuckDuckGo","https://duckduckgo.com","#de5833"],["Wikipedia","https://en.wikipedia.org","#555"],["YouTube","https://www.youtube.com","#d92d20"],["Reddit","https://www.reddit.com","#ff4500"],["GitHub","https://github.com","#2f6feb"],["Google","https://www.google.com","#4285f4"]];
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+let pattern=store.get("nx.proxy")||DEFAULT_PATTERN;
+let tabs=[],cur=null,uid=0;
+
+const norm=v=>{v=v.trim();if(!v)return"";if(/^[a-z][a-z0-9+.-]*:\/\//i.test(v))return v;
+ if(!/\s/.test(v)&&/^(localhost|[\w-]+(\.[\w-]+)+)(:\d+)?([\/?#].*)?$/i.test(v))return"https://"+v;return SEARCH+encodeURIComponent(v)};
+const proxied=u=>pattern.split("{encoded}").join(encodeURIComponent(u)).split("{url}").join(u);
+const host=u=>{try{return new URL(u).hostname.replace(/^www\./,"")}catch(e){return u}};
+const active=()=>tabs.find(t=>t.id===cur);
+
+function save(){store.set("nx.tabs",JSON.stringify({cur:tabs.findIndex(t=>t.id===cur),urls:tabs.map(t=>t.url)}))}
+function mk(url){
+ const t={id:++uid,url:"",title:"New tab",hist:[],pos:-1,frame:null};
+ const el=document.createElement("div");el.className="tab";
+ el.innerHTML='<span class="fv"></span><span class="t"></span><button class="x" title="Close tab"><svg class="i"><use href="#x"/></svg></button>';
+ el.onclick=e=>{if(e.target.closest(".x"))close(t.id);else select(t.id)};
+ el.onauxclick=e=>{if(e.button===1){e.preventDefault();close(t.id)}};
+ $("#tabs").insertBefore(el,$("#plus"));t.el=el;tabs.push(t);
+ select(t.id);if(url)nav(t,url);return t}
+function close(id){
+ const i=tabs.findIndex(t=>t.id===id);if(i<0)return;const t=tabs[i];
+ t.el.remove();if(t.frame)t.frame.remove();tabs.splice(i,1);
+ if(!tabs.length){mk();return}
+ if(cur===id)select(tabs[Math.max(0,i-1)].id);else save()}
+function select(id){cur=id;render();save()}
+function nav(t,input,push=true){
+ const url=norm(input);if(!url)return;
+ t.url=url;t.title=host(url);
+ if(push){t.hist=t.hist.slice(0,t.pos+1);t.hist.push(url);t.pos=t.hist.length-1}
+ if(!t.frame){const f=document.createElement("iframe");f.allow="fullscreen; clipboard-read; clipboard-write; autoplay; gamepad";f.referrerPolicy="no-referrer";
+  f.onload=()=>$("#load").classList.remove("run");$("#stage").appendChild(f);t.frame=f}
+ const l=$("#load");l.classList.remove("run");void l.offsetWidth;l.classList.add("run");
+ t.frame.src=proxied(url);render();save()}
+function render(){
+ const t=active();if(!t)return;
+ tabs.forEach(x=>{
+  x.el.classList.toggle("on",x.id===cur);
+  x.el.querySelector(".t").textContent=x.url?x.title:"New tab";
+  x.el.querySelector(".fv").textContent=x.url?(x.title[0]||"?").toUpperCase():"+";
+  if(x.frame)x.frame.classList.toggle("on",x.id===cur&&!!x.url)});
+ $("#ntp").classList.toggle("on",!t.url);
+ if(document.activeElement!==$("#url"))$("#url").value=t.url;
+ $("#back").disabled=t.pos<1&&!t.url;$("#fwd").disabled=t.pos>=t.hist.length-1;
+ $("#ext").disabled=!t.url;
+ document.title=(t.url?t.title+" · ":"")+"node.x browser";
+ t.el.scrollIntoView({block:"nearest",inline:"nearest"})}
+
+$("#plus").onclick=()=>{mk();$("#nq").focus()};
+$("#url").onkeydown=e=>{if(e.key==="Enter"){const t=active();nav(t,e.target.value);e.target.blur()}};
+$("#url").onfocus=e=>e.target.select();
+$("#nf").onsubmit=e=>{e.preventDefault();const v=$("#nq").value;$("#nq").value="";nav(active(),v)};
+$("#home").onclick=()=>{const t=active();t.url="";t.title="New tab";render();$("#nq").focus()};
+$("#reload").onclick=()=>{const t=active();if(!t.url)return;
+ try{t.frame.contentWindow.location.reload();return}catch(e){}
+ nav(t,t.url,false)};
+$("#back").onclick=()=>{const t=active();
+ if(!t.url){if(t.pos>=0){t.url=t.hist[t.pos];t.title=host(t.url);render()}return}
+ try{if(t.frame.contentWindow.history.length>1){t.frame.contentWindow.history.back();return}}catch(e){} // works when the proxy page is same-origin
+ if(t.pos>0){t.pos--;nav(t,t.hist[t.pos],false)}else{t.url="";render()}};
+$("#fwd").onclick=()=>{const t=active();
+ try{if(t.url){t.frame.contentWindow.history.forward();if(t.pos>=t.hist.length-1)return}}catch(e){}
+ if(t.pos<t.hist.length-1){t.pos++;nav(t,t.hist[t.pos],false)}};
+$("#ext").onclick=()=>{const t=active();if(t.url)window.open(proxied(t.url),"_blank","noopener")};
+$("#full").onclick=()=>{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{})};
+addEventListener("keydown",e=>{if(!e.altKey)return;const k=e.key.toLowerCase();
+ if(k==="t"){e.preventDefault();$("#plus").click()}
+ else if(k==="w"){e.preventDefault();close(cur)}
+ else if(k==="l"){e.preventDefault();$("#url").focus()}});
+
+function hint(){$("#hint").innerHTML='Pages load through your proxy at <code></code>. Change it with the gear if pages don\'t load.';
+ $("#hint code").textContent=pattern.replace("{encoded}","…").replace("{url}","…")}
+$("#cfg").onclick=()=>{$("#pat").value=pattern;$("#dlg").showModal()};
+$("#cx").onclick=()=>$("#dlg").close();
+$("#rst").onclick=()=>{$("#pat").value=DEFAULT_PATTERN};
+$("#sv").onclick=()=>{const v=$("#pat").value.trim();
+ if(v&&!/\{(encoded|url)\}/.test(v)){$("#pat").setCustomValidity("x");alert("The address needs {encoded} or {url} in it.");return}
+ pattern=v||DEFAULT_PATTERN;store.set("nx.proxy",pattern);$("#dlg").close();hint();
+ tabs.forEach(t=>{if(t.url&&t.frame)t.frame.src=proxied(t.url)})};
+
+$("#quick").innerHTML=QUICK.map(([n,u,c])=>`<button class="q" data-u="${u}"><b style="background:${c}">${n[0]}</b>${n}</button>`).join("");
+$("#quick").onclick=e=>{const b=e.target.closest(".q");if(b)nav(active(),b.dataset.u)};
+
+hint();
+let saved=null;try{saved=JSON.parse(store.get("nx.tabs")||"null")}catch(e){}
+if(saved&&Array.isArray(saved.urls)&&saved.urls.length){saved.urls.forEach(u=>mk(u));const t=tabs[saved.cur];if(t)select(t.id)}else mk();
+</script>
+</body>
+</html>

@@ -27,6 +27,10 @@ body{font-family:"Geist",system-ui,sans-serif;background:var(--bg,#0e0e10);color
 .brand:hover{transform:rotate(-8deg) scale(1.06)}
 .brand svg{width:100%;height:100%;display:block;border-radius:8px}
 .bhero{width:84px;height:84px;border-radius:22px;box-shadow:0 10px 40px rgba(0,0,0,.5),0 0 0 1px var(--ln)}
+.warn{position:absolute;top:0;left:0;right:0;z-index:4;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#3a1d1d;color:#ffd9d9;border-bottom:1px solid #6b2c2c;font-size:13px;line-height:1.4}
+.warn[hidden]{display:none}
+.warn span{flex:1;min-width:0}
+.warn button{height:30px;padding:0 12px;border-radius:8px;border:1px solid #8a4040;background:none;color:inherit;flex:none}
 .dstat{min-height:18px;margin:10px 0 0;font-size:13px;line-height:1.45;color:var(--fg-m,#cfcfd6)}
 .plus{flex:none;width:30px;height:30px;margin:0 0 3px 2px;border:0;border-radius:9px;background:none;color:var(--fg-m,#cfcfd6);display:grid;place-items:center;padding:0}
 .plus:hover{background:var(--chrome-2)}
@@ -101,6 +105,7 @@ dialog .row .go{background:var(--fg,#ededef);color:var(--bg,#0e0e10);border-colo
   <a class="ib" href="index.html" title="Back to node.x" style="text-decoration:none"><svg class="i"><use href="#x"/></svg></a>
  </div>
  <div class="stage" id="stage">
+  <div class="warn" id="warn" hidden><span id="wtxt"></span><button id="wcfg">Settings</button><button id="wx">Dismiss</button></div>
   <div class="load" id="load"></div>
   <div class="ntp on" id="ntp">
    <img class="bhero" src="browser-logo.svg" alt="">
@@ -157,7 +162,7 @@ function nav(t,input,push=true){
  if(!t.frame){const f=document.createElement("iframe");f.allow="fullscreen; clipboard-read; clipboard-write; autoplay; gamepad";f.referrerPolicy="no-referrer";
   f.onload=()=>$("#load").classList.remove("run");$("#stage").appendChild(f);t.frame=f}
  const l=$("#load");l.classList.remove("run");void l.offsetWidth;l.classList.add("run");
- t.frame.src=proxied(url);render();save()}
+ t.frame.src=proxied(url);render();save();checkProxy()}
 function render(){
  const t=active();if(!t)return;
  tabs.forEach(x=>{
@@ -197,6 +202,19 @@ addEventListener("keydown",e=>{if(!e.altKey)return;const k=e.key.toLowerCase();
 function hint(){$("#hint").innerHTML='Pages load through your proxy at <code></code>. Change it with the gear if pages don\'t load.';
  $("#hint code").textContent=pattern.replace("{encoded}","…").replace("{url}","…")}
 $("#cfg").onclick=()=>{$("#pat").value=pattern;$("#dlg").showModal()};
+async function probe(pat){let u;
+ try{u=new URL(pat.split("{encoded}").join("x").split("{url}").join("x"))}catch(e){return{ok:false,bad:true,origin:pat}}
+ const c=new AbortController(),tm=setTimeout(()=>c.abort(),5000);
+ try{await fetch(u.origin+"/",{mode:"no-cors",cache:"no-store",signal:c.signal});clearTimeout(tm);return{ok:true,origin:u.origin}}
+ catch(e){clearTimeout(tm);return{ok:false,origin:u.origin}}}
+let okFor=null,warnOff=false;
+async function checkProxy(){if(okFor===pattern)return;const r=await probe(pattern);
+ if(r.ok){okFor=pattern;$("#warn").hidden=true;return}
+ if(warnOff)return;
+ $("#wtxt").textContent=r.bad?"The proxy address in settings isn't valid.":"Can't reach your proxy at "+r.origin+" — pages will say \"refused to connect\" until it is running and reachable from this device (or the browser blocked the check).";
+ $("#warn").hidden=false}
+$("#wcfg").onclick=()=>$("#cfg").click();
+$("#wx").onclick=()=>{warnOff=true;$("#warn").hidden=true};
 $("#tst").onclick=async()=>{const st=$("#dstat"),v=$("#pat").value.trim()||DEFAULT_PATTERN;let u;
  try{u=new URL(v.split("{encoded}").join("x").split("{url}").join("x"))}catch(e){st.textContent="That isn't a valid address.";return}
  st.textContent="Testing "+u.origin+" …";const c=new AbortController(),tm=setTimeout(()=>c.abort(),6000);
@@ -207,13 +225,13 @@ $("#cx").onclick=()=>$("#dlg").close();
 $("#rst").onclick=()=>{$("#pat").value=DEFAULT_PATTERN};
 $("#sv").onclick=()=>{const v=$("#pat").value.trim();
  if(v&&!/\{(encoded|url)\}/.test(v)){$("#pat").setCustomValidity("x");alert("The address needs {encoded} or {url} in it.");return}
- pattern=v||DEFAULT_PATTERN;store.set("nx.proxy",pattern);$("#dlg").close();hint();
+ pattern=v||DEFAULT_PATTERN;store.set("nx.proxy",pattern);$("#dlg").close();hint();warnOff=false;okFor=null;checkProxy();
  tabs.forEach(t=>{if(t.url&&t.frame)t.frame.src=proxied(t.url)})};
 
 $("#quick").innerHTML=QUICK.map(([n,u,c])=>`<button class="q" data-u="${u}"><b style="background:${c}">${n[0]}</b>${n}</button>`).join("");
 $("#quick").onclick=e=>{const b=e.target.closest(".q");if(b)nav(active(),b.dataset.u)};
 
-hint();
+hint();checkProxy();
 let saved=null;try{saved=JSON.parse(store.get("nx.tabs")||"null")}catch(e){}
 if(saved&&Array.isArray(saved.urls)&&saved.urls.length){saved.urls.forEach(u=>mk(u));const t=tabs[saved.cur];if(t)select(t.id)}else mk();
 </script>

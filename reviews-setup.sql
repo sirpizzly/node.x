@@ -8,9 +8,12 @@
 -- 4. Project Settings > API: copy the "Project URL" and the "anon public" key
 --    into reviews-config.js, then upload that file to your site.
 --
+-- (Already ran an older version of this file? Run this one again. It is safe to re-run and adds the likes.)
+--
 -- What this enforces on the server (so it can't be skipped by editing the website):
 --   * one review per visitor account (user_id is UNIQUE)
 --   * only the owner can change or delete their review
+--   * one like per person per review, and nobody can like their own review
 --   * 1-5 stars, 3-500 characters, name up to 24 characters
 --   * a basic slur / cuss word check (the word patterns are scrambled with ROT13 so this file isn't a list of slurs)
 -- Note: visitors are anonymous accounts tied to their browser. Someone who clears their site data or uses
@@ -123,3 +126,25 @@ end $$;
 drop trigger if exists reviews_guard on public.reviews;
 create trigger reviews_guard before insert or update on public.reviews
   for each row execute function public.reviews_guard();
+
+-- likes: one per person per review, can't like your own review
+create table if not exists public.review_likes (
+  review_id uuid not null references public.reviews(id) on delete cascade,
+  user_id uuid not null default auth.uid(),
+  created_at timestamptz not null default now(),
+  primary key (review_id, user_id)
+);
+
+alter table public.review_likes enable row level security;
+
+drop policy if exists "likes are public" on public.review_likes;
+drop policy if exists "like others" on public.review_likes;
+drop policy if exists "unlike own" on public.review_likes;
+
+create policy "likes are public" on public.review_likes for select using (true);
+create policy "like others" on public.review_likes for insert to authenticated
+  with check (
+    auth.uid() = user_id
+    and not exists (select 1 from public.reviews r where r.id = review_id and r.user_id = auth.uid())
+  );
+create policy "unlike own" on public.review_likes for delete to authenticated using (auth.uid() = user_id);

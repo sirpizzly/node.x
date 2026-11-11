@@ -45,3 +45,10 @@
 .rv-body{margin:8px 0 0;font-size:14px;line-height:1.55;color:var(--fg-m);white-space:pre-wrap;overflow-wrap:anywhere}
 .rv-empty{padding:26px 0;text-align:center}
 .rv-more{display:flex;justify-content:center;margin:16px 0 8px}
+.rv-like{display:inline-flex;align-items:center;gap:6px;margin-top:10px;height:30px;padding:0 12px;border:1px solid var(--border);border-radius:99px;background:none;color:var(--fg-m);font-size:13px;transition:background .15s,border-color .15s,transform .12s}
+.rv-like svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rv-like:hover:not(:disabled){background:color-mix(in srgb,var(--fg) 8%,transparent);border-color:var(--border-2,var(--fg-d))}
+.rv-like:active:not(:disabled){transform:scale(.94)}
+.rv-like.on{color:#f87171;border-color:color-mix(in srgb,#f87171 50%,transparent)}
+.rv-like.on svg{fill:#f87171;stroke:#f87171}
+.rv-like:disabled{opacity:.55;cursor:default}

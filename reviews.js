@@ -65,7 +65,8 @@
         ls("nx_rv_local", JSON.stringify(all));
       });
     },
-    remove: function () { return this.uid().then(function (u) { ls("nx_rv_local", JSON.stringify((jget("nx_rv_local") || []).filter(function (x) { return x.user_id !== u; }))); }); }
+    remove: function () { return this.uid().then(function (u) { ls("nx_rv_local", JSON.stringify((jget("nx_rv_local") || []).filter(function (x) { return x.user_id !== u; }))); }); },
+    like: function () { return Promise.reject(new Error("local")); }
   };
 
   var Remote = {
@@ -94,7 +95,7 @@
     },
     uid: function () { return this.session().then(function (s) { return s.uid; }); },
     list: function () {
-      return fetch(API + "/rest/v1/reviews?select=id,user_id,name,rating,body,created_at,updated_at&order=created_at.desc&limit=500", { headers: this.hdr() })
+      return fetch(API + "/rest/v1/reviews?select=id,user_id,name,rating,body,created_at,updated_at,review_likes(user_id)&order=created_at.desc&limit=500", { headers: this.hdr() })
         .then(function (r) { if (!r.ok) throw new Error("list"); return r.json(); });
     },
     save: function (r) {
@@ -109,6 +110,15 @@
         return res.text().then(function (t) { var e = new Error(/profanity/i.test(t) ? "profanity" : "save"); throw e; });
       });
     },
+    like: function (id, on) {
+      var self = this;
+      return self.session().then(function (s) {
+        if (on) return fetch(API + "/rest/v1/review_likes", { method: "POST", headers: self.hdr(s.token, { Prefer: "return=minimal" }), body: JSON.stringify({ review_id: id, user_id: s.uid }) })
+          .then(function (res) { if (!res.ok && res.status !== 409) throw new Error("like"); });
+        return fetch(API + "/rest/v1/review_likes?review_id=eq." + encodeURIComponent(id) + "&user_id=eq." + encodeURIComponent(s.uid), { method: "DELETE", headers: self.hdr(s.token) })
+          .then(function (res) { if (!res.ok) throw new Error("like"); });
+      });
+    },
     remove: function () {
       var self = this;
       return self.session().then(function (s) {
@@ -121,6 +131,7 @@
   /* ---------- UI ---------- */
   var STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>';
   var FIVE = STAR + STAR + STAR + STAR + STAR;
+  var HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
   root.innerHTML =
     '<h2>Reviews</h2>' +
     '<p class="gm rv-note" id="rvNote" hidden></p>' +
@@ -134,7 +145,7 @@
         '<p class="rv-msg" id="rvMsg" role="status"></p>' +
       '</section>' +
     '</div>' +
-    '<div class="rv-sort" id="rvSort"><button class="chip on" data-s="new">Newest</button><button class="chip" data-s="hi">Highest</button><button class="chip" data-s="lo">Lowest</button></div>' +
+    '<div class="rv-sort" id="rvSort"><button class="chip on" data-s="new">Newest</button><button class="chip" data-s="likes">Most liked</button><button class="chip" data-s="hi">Highest</button><button class="chip" data-s="lo">Lowest</button></div>' +
     '<div class="rv-list" id="rvList"></div>' +
     '<div class="rv-more"><button class="btn" id="rvMore" hidden>Show more</button></div>';
   function $(s) { return root.querySelector(s); }
@@ -189,7 +200,8 @@
 
   function renderList() {
     var a = state.all.slice();
-    if (state.sort === "hi") a.sort(function (x, y) { return y.rating - x.rating || (y.created_at > x.created_at ? 1 : -1); });
+    if (state.sort === "likes") a.sort(function (x, y) { return (y.likes || 0) - (x.likes || 0) || (y.created_at > x.created_at ? 1 : -1); });
+    else if (state.sort === "hi") a.sort(function (x, y) { return y.rating - x.rating || (y.created_at > x.created_at ? 1 : -1); });
     else if (state.sort === "lo") a.sort(function (x, y) { return x.rating - y.rating || (y.created_at > x.created_at ? 1 : -1); });
     else a.sort(function (x, y) { return y.created_at > x.created_at ? 1 : -1; });
     var box = $("#rvList"); box.textContent = "";
@@ -205,7 +217,10 @@
       var when = document.createElement("span"); when.className = "gm rv-when"; when.textContent = ago(r.created_at); head.appendChild(when);
       var st = document.createElement("div"); st.innerHTML = stars(r.rating);
       var p = document.createElement("p"); p.className = "rv-body"; p.textContent = r.body;
-      mid.append(head, st, p); el.append(av, mid); box.appendChild(el);
+      var lk = document.createElement("button"); lk.type = "button"; lk.className = "rv-like" + (r.liked ? " on" : ""); lk.dataset.id = r.id;
+      lk.disabled = mine; lk.setAttribute("aria-pressed", String(!!r.liked)); lk.title = mine ? "You can't like your own review" : (r.liked ? "Remove your like" : "Like this review");
+      lk.innerHTML = HEART + '<span>' + (r.likes || 0) + '</span>';
+      mid.append(head, st, p, lk); el.append(av, mid); box.appendChild(el);
     });
     $("#rvMore").hidden = a.length <= state.shown;
   }
@@ -230,6 +245,7 @@
   function load() {
     return B.uid().then(function (u) { state.uid = u; return B.list(); }).then(function (rows) {
       state.all = (rows || []).filter(function (r) { return r && r.rating >= 1 && r.rating <= 5; });
+      state.all.forEach(function (r) { var l = r.review_likes || []; r.likes = l.length; r.liked = l.some(function (x) { return x.user_id === state.uid; }); });
       state.loaded = true; render();
     }).catch(function () {
       msg(remote ? "Couldn't reach the reviews database. Try again in a moment." : "Couldn't load reviews.", true);
@@ -274,6 +290,13 @@
     state.sort = b.dataset.s; state.shown = 20;
     [].forEach.call($("#rvSort").children, function (x) { x.classList.toggle("on", x === b); });
     renderList();
+  });
+  $("#rvList").addEventListener("click", function (e) {
+    var b = e.target.closest(".rv-like"); if (!b || b.disabled) return;
+    var r = state.all.filter(function (x) { return x.id === b.dataset.id; })[0]; if (!r || r.pending) return;
+    var on = !r.liked; r.pending = true; r.liked = on; r.likes = (r.likes || 0) + (on ? 1 : -1); renderList();
+    B.like(r.id, on).catch(function () { r.liked = !on; r.likes += on ? -1 : 1; msg("Couldn't save your like. Try again.", true); })
+      .then(function () { r.pending = false; renderList(); });
   });
   $("#rvMore").addEventListener("click", function () { state.shown += 20; renderList(); });
 

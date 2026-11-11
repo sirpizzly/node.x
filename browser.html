@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Browser · node.x</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23000'/%3E%3Ccircle cx='50' cy='50' r='26' fill='none' stroke='%23fff' stroke-width='8'/%3E%3Cpath d='M24 50h52M50 24c14 16 14 36 0 52M50 24c-14 16-14 36 0 52' fill='none' stroke='%23fff' stroke-width='5'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="browser-logo.svg">
 <link rel="stylesheet" href="style.css">
 <style>
 :root{--chrome:color-mix(in srgb,var(--bg,#0e0e10) 88%,#fff 12%);--chrome-2:color-mix(in srgb,var(--bg,#0e0e10) 94%,#fff 6%);--ln:color-mix(in srgb,var(--fg,#ededef) 14%,transparent)}
@@ -23,6 +23,11 @@ body{font-family:"Geist",system-ui,sans-serif;background:var(--bg,#0e0e10);color
 .tab.on::before,.tab.on::after{content:"";position:absolute;bottom:0;width:10px;height:10px;pointer-events:none}
 .tab.on::before{left:-10px;background:radial-gradient(circle at 0 0,transparent 10px,var(--chrome) 10.5px)}
 .tab.on::after{right:-10px;background:radial-gradient(circle at 100% 0,transparent 10px,var(--chrome) 10.5px)}
+.brand{flex:none;width:30px;height:30px;margin:0 4px 3px 0;display:block;transition:transform .2s}
+.brand:hover{transform:rotate(-8deg) scale(1.06)}
+.brand svg{width:100%;height:100%;display:block;border-radius:8px}
+.bhero{width:84px;height:84px;border-radius:22px;box-shadow:0 10px 40px rgba(0,0,0,.5),0 0 0 1px var(--ln)}
+.dstat{min-height:18px;margin:10px 0 0;font-size:13px;line-height:1.45;color:var(--fg-m,#cfcfd6)}
 .plus{flex:none;width:30px;height:30px;margin:0 0 3px 2px;border:0;border-radius:9px;background:none;color:var(--fg-m,#cfcfd6);display:grid;place-items:center;padding:0}
 .plus:hover{background:var(--chrome-2)}
 .bar{display:flex;align-items:center;gap:4px;padding:7px 8px;background:var(--chrome);border-bottom:1px solid var(--ln);flex:none}
@@ -78,12 +83,12 @@ dialog .row .go{background:var(--fg,#ededef);color:var(--bg,#0e0e10);border-colo
   <symbol id="o" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
   <symbol id="m" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
   <symbol id="g" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
-  <symbol id="n" viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></symbol>
+  <symbol id="logo" viewBox="0 0 100 100"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#26262b"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient></defs><rect width="100" height="100" rx="24" fill="url(#lg)"/><rect x="1.5" y="1.5" width="97" height="97" rx="22.5" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width="3"/><g fill="none" stroke="#fff" stroke-linecap="round"><circle cx="48" cy="52" r="25" stroke-width="5"/><ellipse cx="48" cy="52" rx="11" ry="25" stroke-width="3.5" stroke-opacity=".85"/><path d="M23 52h50" stroke-width="3.5" stroke-opacity=".85"/></g><circle cx="74" cy="26" r="11" fill="#0a0a0c"/><circle cx="74" cy="26" r="7.5" fill="#fff"/></symbol>
  </defs>
 </svg>
 
 <div class="app">
- <div class="tabs" id="tabs"><button class="plus" id="plus" title="New tab (Alt+T)"><svg class="i"><use href="#p"/></svg></button></div>
+ <div class="tabs" id="tabs"><a class="brand" href="index.html" title="node.x browser"><svg viewBox="0 0 100 100"><use href="#logo"/></svg></a><button class="plus" id="plus" title="New tab (Alt+T)"><svg class="i"><use href="#p"/></svg></button></div>
  <div class="bar">
   <button class="ib" id="back" title="Back" disabled><svg class="i"><use href="#b"/></svg></button>
   <button class="ib" id="fwd" title="Forward" disabled><svg class="i"><use href="#f"/></svg></button>
@@ -98,6 +103,7 @@ dialog .row .go{background:var(--fg,#ededef);color:var(--bg,#0e0e10);border-colo
  <div class="stage" id="stage">
   <div class="load" id="load"></div>
   <div class="ntp on" id="ntp">
+   <img class="bhero" src="browser-logo.svg" alt="">
    <h1>node.x browser</h1>
    <form id="nf"><svg class="i"><use href="#s"/></svg><input id="nq" placeholder="Search the web or type a URL" autocomplete="off" spellcheck="false"></form>
    <div class="quick" id="quick"></div>
@@ -110,7 +116,8 @@ dialog .row .go{background:var(--fg,#ededef);color:var(--bg,#0e0e10);border-colo
  <h2>Proxy settings</h2>
  <p>Where your proxy lives. Use <code>{encoded}</code> where the website address goes (or <code>{url}</code> for the raw address). Saved in this browser only.</p>
  <input id="pat" spellcheck="false" autocomplete="off">
- <div class="row"><button id="rst">Reset</button><button id="cx">Cancel</button><button class="go" id="sv">Save</button></div>
+ <p class="dstat" id="dstat"></p>
+ <div class="row"><button id="tst">Test</button><button id="rst">Reset</button><button id="cx">Cancel</button><button class="go" id="sv">Save</button></div>
 </dialog>
 
 <script>
@@ -190,6 +197,12 @@ addEventListener("keydown",e=>{if(!e.altKey)return;const k=e.key.toLowerCase();
 function hint(){$("#hint").innerHTML='Pages load through your proxy at <code></code>. Change it with the gear if pages don\'t load.';
  $("#hint code").textContent=pattern.replace("{encoded}","…").replace("{url}","…")}
 $("#cfg").onclick=()=>{$("#pat").value=pattern;$("#dlg").showModal()};
+$("#tst").onclick=async()=>{const st=$("#dstat"),v=$("#pat").value.trim()||DEFAULT_PATTERN;let u;
+ try{u=new URL(v.split("{encoded}").join("x").split("{url}").join("x"))}catch(e){st.textContent="That isn't a valid address.";return}
+ st.textContent="Testing "+u.origin+" …";const c=new AbortController(),tm=setTimeout(()=>c.abort(),6000);
+ try{await fetch(u.origin+"/",{mode:"no-cors",cache:"no-store",signal:c.signal});clearTimeout(tm);
+  st.textContent="Reached "+u.origin+". If pages still say \"refused to connect\", the proxy is refusing to be shown inside another page (it sends a frame-blocking header). Use the open-in-new-tab button, or allow framing in the proxy's settings."}
+ catch(e){clearTimeout(tm);st.textContent="Couldn't reach "+u.origin+". The proxy isn't running there, or that address only exists on the computer running it (127.0.0.1 is always \"this device\"). Start it with docker compose up -d, check the port, or use its public address."}};
 $("#cx").onclick=()=>$("#dlg").close();
 $("#rst").onclick=()=>{$("#pat").value=DEFAULT_PATTERN};
 $("#sv").onclick=()=>{const v=$("#pat").value.trim();
